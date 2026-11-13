@@ -1,0 +1,3009 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>index.html</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase Compat SDK v10.12.2 -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <!-- QRCode Generator CDN (800x1040 출입문 QR 포스터 생성용) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <!-- Pretendard & Inter Fonts -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #eef2f6;
+        }
+        .font-num {
+            font-family: 'Inter', 'Pretendard', sans-serif;
+        }
+        /* 모바일 날짜 셀 연속 터치(더블탭) 시 브라우저 확대 방지 */
+        .calendar-day-btn {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* 캘린더 날짜 칸 내부 일정 배지 말줄임 */
+        .cal-event-bar {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.16s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
+
+    <!-- 모바일 중심 메인 앱 컨테이너 -->
+    <div class="w-full max-w-[480px] mx-auto min-h-screen bg-slate-50 shadow-sm border-x border-slate-200/80 flex flex-col relative pb-28">
+
+        <!-- 상단 토스트 알림 컨테이너 -->
+        <div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-[440px] flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- ========================================================= -->
+        <!-- 상단 고정 헤더 (반응형 2단 구조: 관리자 로그인 시 브랜드 보존) -->
+        <!-- ========================================================= -->
+        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3.5 py-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                <!-- 1행: 좌측 브랜드 블록 + (비로그인 시) 관리자 로그인 버튼 -->
+                <div class="w-full sm:w-auto flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-3 shrink-0">
+                        <!-- 온누리교회 엠블럼 SVG (빨간 십자가 #C81E1E, 파란 원형 호 #0052B4, 초록 가로 붓터치 #2E7D32) -->
+                        <div class="w-11 h-11 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex items-center justify-center shrink-0 p-1.5" aria-label="양산 온누리교회 로고">
+                            <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M47.2 7.5C47.2 5.4 53.8 5.4 53.8 7.6C53.9 18.5 53.7 35.8 53.4 46.8C53.3 49.0 47.6 49.0 47.5 46.7C47.2 35.6 47.1 18.5 47.2 7.5Z" fill="#C81E1E"/>
+                                <path d="M36.5 18.4C45.2 17.8 57.6 17.8 66.6 18.5C69.1 18.7 69.0 24.4 66.4 24.5C57.4 24.9 45.2 24.9 36.4 24.3C33.8 24.1 33.9 18.6 36.5 18.4Z" fill="#C81E1E"/>
+                                <path d="M39.8 28.8C42.9 30.8 43.2 35.5 40.3 37.8C32.4 42.3 25.8 49.6 25.4 59.3C24.9 71.5 34.8 81.2 49.4 81.8C64.2 82.4 76.8 72.4 78.6 58.6C79.7 50.2 77.6 42.4 74.6 36.5C74.1 35.5 75.2 34.7 76.1 35.4C84.2 41.8 89.6 51.4 89.2 62.6C88.5 80.6 71.8 93.8 49.2 93.4C26.8 93.0 10.6 78.6 11.2 59.2C11.7 43.6 21.8 31.8 35.2 27.9C36.9 27.4 38.5 27.9 39.8 28.8Z" fill="#0052B4"/>
+                                <path d="M32.4 59.4C42.5 57.4 56.8 56.2 67.6 56.6C70.4 56.7 70.6 61.5 67.7 62.1C57.2 63.7 43.4 65.4 33.2 67.2C29.4 67.9 28.5 60.2 32.4 59.4Z" fill="#2E7D32"/>
+                            </svg>
+                        </div>
+                        <div class="shrink-0">
+                            <span class="block text-xs font-bold text-[#0052B4] whitespace-nowrap leading-tight">양산 온누리교회</span>
+                            <h1 class="text-[17px] sm:text-lg font-extrabold text-slate-900 tracking-tight whitespace-nowrap leading-snug">예배음악국 연습실</h1>
+                            <span class="block text-xs font-medium text-slate-500 font-num whitespace-nowrap leading-tight">Onnuri Worship Studio</span>
+                            <!-- 실시간 동기화 상태 배지 -->
+                            <span id="syncStatusPill" class="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200/80">
+                                <span id="syncStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                <span id="syncStatusText">연결 중...</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 비로그인 상태에서만 표시되는 관리자 로그인 버튼 -->
+                    <button type="button" id="btnOpenAdminLogin"
+                        class="shrink-0 whitespace-nowrap px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50 text-xs font-bold text-slate-700 hover:text-indigo-700 transition flex items-center gap-1.5 shadow-2xs active:scale-95">
+                        <span>🔒 관리자 로그인</span>
+                    </button>
+                </div>
+
+                <!-- 2행: 관리자 로그인 시에만 표시되는 독립 액션 바 (모바일에서 전체 너비 사용) -->
+                <div id="headerAdminActionBar" class="hidden w-full sm:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-1.5 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 animate-fade-in">
+                    <span id="headerAdminBadgeText" class="whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold font-num">
+                        🛡️ 관리자 (admin1)
+                    </span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <button type="button" id="btnOpenAdminManageModal"
+                            class="whitespace-nowrap px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition active:scale-95 flex items-center gap-1">
+                            <span>📋 전체 예약 관리</span>
+                            <span id="headerManageIssueDot" class="hidden w-2 h-2 rounded-full bg-rose-400"></span>
+                        </button>
+                        <button type="button" id="btnHeaderQrSave"
+                            class="whitespace-nowrap px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition active:scale-95">
+                            📱 QR코드 저장
+                        </button>
+                        <button type="button" id="btnHeaderLogout"
+                            class="whitespace-nowrap px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-semibold transition active:scale-95">
+                            로그아웃
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Firebase 연결/권한 오류 안내 배너 (오류 발생 시에만 노출) -->
+            <div id="dbErrorBanner" class="hidden mt-2.5 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs leading-relaxed">
+                <p class="font-bold flex items-center gap-1.5">
+                    <span>⚠️ 실시간 데이터베이스 연결 안내</span>
+                </p>
+                <p id="dbErrorDetail" class="mt-0.5 text-[11px] text-rose-700">네트워크 상태 또는 Firebase Realtime Database 규칙을 확인해 주세요.</p>
+            </div>
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- 메인 콘텐츠 영역 -->
+        <!-- ========================================================= -->
+        <main class="flex-1 px-2 py-3.5 sm:px-3.5 space-y-3.5">
+
+            <!-- 1. 월간 캘린더 카드 -->
+            <section class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs px-1.5 py-3 sm:p-3.5">
+                <!-- 월 이동 및 '오늘' 버튼 -->
+                <div class="flex items-center justify-between px-1 mb-2">
+                    <div class="flex items-center gap-2">
+                        <h2 id="calendarMonthTitle" class="text-[15px] font-bold text-slate-900 font-num">2026년 11월</h2>
+                        <button type="button" id="btnGoToday"
+                            class="px-2.5 py-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200/60 transition active:scale-95">
+                            오늘
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" id="btnPrevMonth" aria-label="이전 달"
+                            class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-95 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <button type="button" id="btnNextMonth" aria-label="다음 달"
+                            class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-95 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 오전 / 오후 / 저녁 3색 컬러 범례 -->
+                <div class="px-1 mb-2 flex items-center justify-between gap-1 flex-wrap">
+                    <span class="text-[10.5px] text-slate-400">날짜 두 번 탭 시 상세보기</span>
+                    <div class="flex items-center gap-1.5 text-[10.5px] font-semibold">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-r-[4px]" style="background-color:#E0F2FE; border-left:2.5px solid #0284C7; color:#0369A1;">
+                            오전 (07~12시)
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-r-[4px]" style="background-color:#FEF3C7; border-left:2.5px solid #D97706; color:#92400E;">
+                            오후 (12~18시)
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-r-[4px]" style="background-color:#EDE9FE; border-left:2.5px solid #4F46E5; color:#3730A3;">
+                            저녁 (18~22시)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 요일 헤더 (일: 빨강, 토: 파랑) -->
+                <div class="grid grid-cols-7 text-center text-[11px] font-semibold pb-1.5 border-b border-slate-100">
+                    <div class="text-rose-500">일</div>
+                    <div class="text-slate-600">월</div>
+                    <div class="text-slate-600">화</div>
+                    <div class="text-slate-600">수</div>
+                    <div class="text-slate-600">목</div>
+                    <div class="text-slate-600">금</div>
+                    <div class="text-blue-500">토</div>
+                </div>
+
+                <!-- 7열 날짜 그리드 -->
+                <div id="calendarGrid" class="grid grid-cols-7 gap-[2px] pt-1.5"></div>
+            </section>
+
+            <!-- 2. 선택된 날짜 예약 현황 & 07:00~22:00 연속 점유 타임라인 -->
+            <section class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-3.5 sm:p-4">
+                <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 id="selectedDateTitle" class="text-[15px] font-bold text-slate-900">11월 14일 (토)</h3>
+                            <span id="selectedDateTodayBadge" class="hidden px-1.5 py-0.5 text-[10px] font-bold bg-indigo-600 text-white rounded-md">TODAY</span>
+                        </div>
+                        <p id="selectedDateSummary" class="text-xs text-slate-500 mt-0.5">선택된 날짜 예약 현황</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-[10px] font-semibold text-slate-500 shrink-0">
+                        <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs" style="background-color:#0284C7;"></i>오전</span>
+                        <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs" style="background-color:#D97706;"></i>오후</span>
+                        <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs" style="background-color:#4F46E5;"></i>저녁</span>
+                        <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs bg-slate-200"></i>빈시간</span>
+                    </div>
+                </div>
+
+                <!-- 시각적 연속 점유 타임라인 바 (07:00 ~ 22:00, 하단 라벨: 09:00 ~ 21:00) -->
+                <div id="occupancyTimelineContainer" class="mt-3 mb-3.5 bg-slate-50 rounded-xl p-3 border border-slate-200/70"></div>
+
+                <!-- 해당 날짜의 예약 카드 목록 (시작 시간순 정렬) -->
+                <div id="dailyBookingList" class="space-y-2.5"></div>
+            </section>
+
+            <!-- 3. 연습실 시설·장비 관리 및 이상 제보 카드 -->
+            <section class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-3.5 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold text-slate-800">연습실 시설 · 장비 관리</span>
+                        <span id="publicIssueCountPill" class="hidden px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold font-num">접수 0건</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-0.5 truncate">앰프·건반·냉난방기 이상 발견 시 즉시 남겨주세요.</p>
+                </div>
+                <button type="button" id="btnOpenFacilityReport"
+                    class="shrink-0 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200/90 hover:border-amber-200 text-xs font-bold transition active:scale-95">
+                    🔧 장비/시설 이상 제보
+                </button>
+            </section>
+
+        </main>
+
+        <!-- 하단 운영 안내 푸터 -->
+        <footer class="px-4 py-4 text-center">
+            <p class="text-[11px] text-slate-400">
+                운영시간 07:00 ~ 22:00 (30분 단위) · 양산 온누리교회 예배음악국
+            </p>
+        </footer>
+
+        <!-- 하단 고정 플로팅 예약 버튼 ('+ 연습실 예약하기') -->
+        <div class="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 w-full max-w-[480px] px-4 pb-4 pt-3 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent pointer-events-none">
+            <button type="button" id="btnOpenBookingFloating"
+                class="pointer-events-auto w-full py-3.5 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white text-sm font-bold shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>연습실 예약하기</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 0: 날짜 더블탭 상세 현황 팝업 -->
+    <!-- ========================================================= -->
+    <div id="dailyDetailModal" class="fixed inset-0 z-40 hidden bg-slate-900/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" data-backdrop-close="dailyDetailModal">
+        <div class="bg-white w-full max-w-[480px] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-slide-up max-h-[88vh] flex flex-col">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-2 shrink-0 bg-white">
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h3 id="detailModalDateTitle" class="text-base font-bold text-slate-900">2026년 11월 14일 (토) 예약 현황</h3>
+                        <span id="detailModalTodayBadge" class="hidden px-1.5 py-0.5 text-[10px] font-bold bg-indigo-600 text-white rounded-md">TODAY</span>
+                    </div>
+                    <p id="detailModalSummaryText" class="text-xs text-slate-500 mt-1">확정 예약 0건</p>
+                </div>
+                <button type="button" data-close-modal="dailyDetailModal" aria-label="팝업 닫기"
+                    class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-3.5 overflow-y-auto flex-1">
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200/70">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-bold text-slate-700">시간대별 점유 현황</span>
+                        <div class="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
+                            <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs" style="background-color:#0284C7;"></i>오전</span>
+                            <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs" style="background-color:#D97706;"></i>오후</span>
+                            <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs" style="background-color:#4F46E5;"></i>저녁</span>
+                            <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-xs bg-slate-200"></i>빈시간</span>
+                        </div>
+                    </div>
+                    <div id="detailModalTimelineContainer"></div>
+                </div>
+
+                <div id="detailModalBookingList" class="space-y-2.5"></div>
+            </div>
+
+            <div class="px-5 py-3.5 border-t border-slate-100 bg-slate-50/80 flex items-center gap-2.5 shrink-0">
+                <button type="button" data-close-modal="dailyDetailModal"
+                    class="flex-1 py-3 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 transition">
+                    닫기
+                </button>
+                <button type="button" id="btnBookFromDetailModal"
+                    class="flex-[2] py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-indigo-200 flex items-center justify-center gap-1.5 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>이 날짜로 연습실 예약하기</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 1: 연습실 예약 신청 모달 & 예약 완료(.ics 추가) 화면 -->
+    <!-- ========================================================= -->
+    <div id="bookingModal" class="fixed inset-0 z-40 hidden bg-slate-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" data-backdrop-close="bookingModal">
+        <div class="bg-white w-full max-w-[480px] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-slide-up max-h-[92vh] flex flex-col">
+            <!-- 모달 헤더 -->
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">예배음악국 연습실 예약</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">빈 시간대를 선택해 등록하면 즉시 예약이 확정됩니다.</p>
+                </div>
+                <button type="button" data-close-modal="bookingModal" aria-label="닫기"
+                    class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- [단계 A] 예약 입력 폼 -->
+            <form id="bookingForm" class="p-5 space-y-3.5 overflow-y-auto">
+                <!-- 실시간 시간 중복 경고 배너 -->
+                <div id="bookingConflictWarning" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2">
+                    <svg class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span id="bookingConflictMessage">해당 시간대에 이미 예약된 일정이 있습니다.</span>
+                </div>
+
+                <!-- 1. 예약 날짜 -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="inputDate" class="block text-xs font-bold text-slate-700">예약 날짜 <span class="text-rose-500">*</span></label>
+                        <span id="adminPastDateHint" class="hidden text-[10.5px] font-semibold text-indigo-600">관리자 권한: 날짜 제한 없음</span>
+                    </div>
+                    <input type="date" id="inputDate" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-num font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                </div>
+
+                <!-- 시작 시간 / 종료 시간 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="inputStartTime" class="block text-xs font-bold text-slate-700 mb-1">시작 시간 <span class="text-rose-500">*</span></label>
+                        <select id="inputStartTime" required
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-num font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"></select>
+                    </div>
+                    <div>
+                        <label for="inputEndTime" class="block text-xs font-bold text-slate-700 mb-1">종료 시간 <span class="text-rose-500">*</span></label>
+                        <select id="inputEndTime" required
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-num font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"></select>
+                    </div>
+                </div>
+
+                <!-- 매주 반복 예약 토글 및 빠른 기간 선택 -->
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label for="toggleWeeklyRecurring" class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="toggleWeeklyRecurring"
+                                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                            <span class="text-xs font-bold text-slate-800">🔁 매주 반복 예약</span>
+                        </label>
+                        <span class="text-[11px] text-slate-400">최대 52주</span>
+                    </div>
+
+                    <div id="recurrenceOptionsBox" class="hidden pt-1 space-y-2.5 animate-fade-in">
+                        <div>
+                            <label for="inputRecurrenceEndDate" class="block text-xs font-bold text-slate-700 mb-1">반복 종료일</label>
+                            <input type="date" id="inputRecurrenceEndDate"
+                                class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-num font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <!-- 빠른 기간 선택 버튼 (4주, 8주, 12주, 26주, 52주) -->
+                            <div class="grid grid-cols-5 gap-1.5 mt-2">
+                                <button type="button" data-quick-weeks="4"
+                                    class="quick-recurrence-btn py-2 rounded-lg bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 text-[11px] font-bold font-num transition active:scale-95">
+                                    4주
+                                </button>
+                                <button type="button" data-quick-weeks="8"
+                                    class="quick-recurrence-btn py-2 rounded-lg bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 text-[11px] font-bold font-num transition active:scale-95">
+                                    8주
+                                </button>
+                                <button type="button" data-quick-weeks="12"
+                                    class="quick-recurrence-btn py-2 rounded-lg bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 text-[11px] font-bold font-num transition active:scale-95">
+                                    12주
+                                </button>
+                                <button type="button" data-quick-weeks="26"
+                                    class="quick-recurrence-btn py-2 rounded-lg bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 text-[11px] font-bold font-num transition active:scale-95">
+                                    26주
+                                </button>
+                                <button type="button" data-quick-weeks="52"
+                                    class="quick-recurrence-btn py-2 rounded-lg bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 text-[11px] font-bold font-num transition active:scale-95">
+                                    52주
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl bg-indigo-50/90 border border-indigo-200/80 text-indigo-900 text-xs">
+                            <p id="recurrenceSummaryText" class="font-bold">매주 토요일 · 총 4회 예약</p>
+                            <p id="recurrenceDatesPreview" class="text-[11px] text-indigo-700/90 mt-1 font-num leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 기관 * (#inputDept) + 빠른 선택 버튼 [클레이], [헤세드], [마라나타], [개인] (제한 없음) -->
+                <div class="space-y-2">
+                    <div>
+                        <label for="inputDept" class="block text-xs font-bold text-slate-700 mb-1">기관 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="inputDept" placeholder="기관명을 입력하거나 아래에서 선택" required maxlength="30"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[11px] font-bold text-slate-500 mr-0.5">빠른 선택:</span>
+                        <button type="button" data-org-chip="클레이"
+                            class="org-preset-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition active:scale-95">
+                            클레이
+                        </button>
+                        <button type="button" data-org-chip="헤세드"
+                            class="org-preset-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition active:scale-95">
+                            헤세드
+                        </button>
+                        <button type="button" data-org-chip="마라나타"
+                            class="org-preset-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition active:scale-95">
+                            마라나타
+                        </button>
+                        <button type="button" data-org-chip="개인"
+                            class="org-preset-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition active:scale-95">
+                            개인
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. 사용 사유 * (#inputPurpose) -->
+                <div>
+                    <label for="inputPurpose" class="block text-xs font-bold text-slate-700 mb-1">사용 사유 <span class="text-rose-500">*</span></label>
+                    <input type="text" id="inputPurpose" placeholder="예: 주일 1부 예배 찬양 연습" required maxlength="60"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- 4. 신청자 성명 * (#inputName) -->
+                <div>
+                    <label for="inputName" class="block text-xs font-bold text-slate-700 mb-1">신청자 성명 <span class="text-rose-500">*</span></label>
+                    <input type="text" id="inputName" placeholder="예: 김민수" required maxlength="20"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- 5. 연락처 * (#inputPhone) -->
+                <div>
+                    <label for="inputPhone" class="block text-xs font-bold text-slate-700 mb-1">연락처 <span class="text-rose-500">*</span></label>
+                    <input type="tel" id="inputPhone" inputmode="numeric" placeholder="010-0000-0000" required maxlength="13"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-num focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[11px] font-medium text-indigo-600 mt-1">
+                        🔒 가운데 번호는 가려지며, 전체 연락처는 관리자에게만 공개됩니다.
+                    </p>
+                </div>
+
+                <!-- 6. 취소용 비밀번호 (숫자 4자리) * (#inputPin) -->
+                <div>
+                    <label for="inputPin" class="block text-xs font-bold text-slate-700 mb-1">취소용 비밀번호 (숫자 4자리) <span class="text-rose-500">*</span></label>
+                    <input type="password" id="inputPin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="숫자 4자리 입력" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-num tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[11px] text-slate-400 mt-1">예약자 본인이 직접 예약을 취소할 때 필요합니다.</p>
+                </div>
+
+                <!-- 7. 퇴실 점검 필수 확인 체크박스 -->
+                <div class="p-3 rounded-xl bg-amber-50/75 border border-amber-200/90">
+                    <label for="inputCheckoutCheck" class="flex items-start gap-2.5 cursor-pointer select-none">
+                        <input type="checkbox" id="inputCheckoutCheck" required
+                            class="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 shrink-0 cursor-pointer">
+                        <span class="text-xs font-semibold text-slate-800 leading-snug">
+                            퇴실 시 음향장비·냉난방기 전원 차단 및 주변 정리를 확인했습니다. <span class="text-rose-600 font-bold">(필수)</span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- 8. 예약 확정하기 버튼 -->
+                <div class="pt-1 flex items-center gap-2.5">
+                    <button type="button" data-close-modal="bookingModal"
+                        class="flex-1 py-3 rounded-xl border border-slate-300 text-slate-700 text-sm font-bold hover:bg-slate-50 transition">
+                        닫기
+                    </button>
+                    <button type="submit" id="btnSubmitBooking"
+                        class="flex-[2] py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white text-sm font-bold shadow-md shadow-indigo-200 transition">
+                        예약 확정하기
+                    </button>
+                </div>
+            </form>
+
+            <!-- [단계 B] 예약 완료 (확정) 확인 화면 & 내 스마트폰 캘린더(.ics) 추가 버튼 -->
+            <div id="bookingSuccessView" class="hidden p-5 space-y-4 overflow-y-auto animate-fade-in">
+                <div class="text-center pt-1">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2.5">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-900">예약 완료 (확정)</h4>
+                    <p class="text-xs text-slate-500 mt-0.5">연습실 예약이 실시간으로 확정되었습니다.</p>
+                </div>
+
+                <div id="bookingSuccessSummaryCard" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs space-y-2 leading-relaxed"></div>
+
+                <div class="space-y-2">
+                    <button type="button" id="btnDownloadSuccessIcs"
+                        class="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-sm font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition">
+                        <span>📅 내 스마트폰 캘린더에 일정 추가 (.ics)</span>
+                    </button>
+                    <p class="text-[11px] text-slate-500 text-center leading-relaxed">
+                        ※ 웹에서 예약을 변경·취소해도 개인 캘린더 일정은 자동 삭제되지 않으니 직접 수정해 주세요.
+                    </p>
+                </div>
+
+                <div id="kakaoInAppTipBox" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed">
+                    💡 카카오톡 내장 브라우저에서는 캘린더 파일 저장이 제한될 수 있습니다. 우측 하단 ⋮ 메뉴에서 '다른 브라우저(Safari/Chrome)로 열기'를 이용해 주세요.
+                </div>
+
+                <div class="pt-1">
+                    <button type="button" data-close-modal="bookingModal"
+                        class="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold transition">
+                        확인 (캘린더로 돌아가기)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 2: 관리자 로그인 모달 -->
+    <!-- ========================================================= -->
+    <div id="adminLoginModal" class="fixed inset-0 z-40 hidden bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4" data-backdrop-close="adminLoginModal">
+        <div class="bg-white w-full max-w-[360px] rounded-2xl shadow-2xl border border-slate-200 p-5 animate-slide-up">
+            <div class="text-center mb-4">
+                <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">관리자 로그인</h3>
+                <p class="text-xs text-slate-500 mt-1">전체 연락처·비밀번호 조회 및 예약 관리 권한이 활성화됩니다.</p>
+            </div>
+
+            <form id="adminLoginForm" class="space-y-3" autocomplete="off">
+                <div>
+                    <label for="adminIdInput" class="block text-xs font-bold text-slate-700 mb-1">아이디</label>
+                    <input type="text" id="adminIdInput" required autocomplete="off"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-num focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label for="adminPwInput" class="block text-xs font-bold text-slate-700 mb-1">비밀번호</label>
+                    <input type="password" id="adminPwInput" required autocomplete="new-password"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-num focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <p id="adminLoginError" class="hidden text-center text-xs font-semibold text-rose-600">아이디 또는 비밀번호가 일치하지 않습니다.</p>
+
+                <div class="grid grid-cols-2 gap-2 pt-1.5">
+                    <button type="button" data-close-modal="adminLoginModal"
+                        class="py-3 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                        취소
+                    </button>
+                    <button type="submit"
+                        class="py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">
+                        로그인
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 3: 예약자 본인 취소 4자리 PIN 확인 모달 -->
+    <!-- ========================================================= -->
+    <div id="userCancelPinModal" class="fixed inset-0 z-40 hidden bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center p-4" data-backdrop-close="userCancelPinModal">
+        <div class="bg-white w-full max-w-[380px] rounded-2xl shadow-2xl border border-slate-200 p-5 animate-slide-up">
+            <div class="text-center">
+                <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">예약 취소 확인</h3>
+                <p id="cancelTargetSummary" class="text-xs text-slate-600 mt-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed"></p>
+            </div>
+
+            <form id="userCancelPinForm" class="mt-3.5 space-y-3">
+                <div id="userCancelScopeBox" class="hidden space-y-1.5 p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-200/80">
+                    <p class="text-[11px] font-bold text-indigo-900">🔁 반복 일정 취소 범위 선택</p>
+                    <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 cursor-pointer">
+                        <input type="radio" name="userCancelScope" value="single" checked class="text-rose-600 focus:ring-rose-500">
+                        <span class="text-xs font-semibold text-slate-800">이 일정만 삭제</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 cursor-pointer">
+                        <input type="radio" name="userCancelScope" value="all" class="text-rose-600 focus:ring-rose-500">
+                        <span id="userCancelAllLabel" class="text-xs font-bold text-rose-700">반복 일정 전체 삭제 (N건)</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label for="cancelPinInput" class="block text-center text-xs text-slate-500 mb-2">
+                        신청 시 설정한 취소용 비밀번호 4자리를 입력하세요.
+                    </label>
+                    <input type="password" id="cancelPinInput" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="••••" required
+                        class="w-full text-center text-2xl font-num font-bold tracking-[0.5em] py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    <p id="cancelPinError" class="hidden text-center text-xs font-semibold text-rose-600 mt-1.5">비밀번호가 일치하지 않습니다.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button type="button" data-close-modal="userCancelPinModal"
+                        class="py-3 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                        닫기
+                    </button>
+                    <button type="submit" id="btnConfirmPinCancel"
+                        class="py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">
+                        예약 취소하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 4: 관리자 강제 삭제 모달 (단일 / 반복 전체 선택) -->
+    <!-- ========================================================= -->
+    <div id="adminForceDeleteModal" class="fixed inset-0 z-50 hidden bg-slate-900/55 backdrop-blur-[2px] flex items-center justify-center p-4" data-backdrop-close="adminForceDeleteModal">
+        <div class="bg-white w-full max-w-[390px] rounded-2xl shadow-2xl border border-slate-200 p-5 animate-slide-up">
+            <div class="flex items-center gap-2.5 mb-3">
+                <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">관리자 예약 삭제</h3>
+                    <p class="text-[11px] text-slate-500">비밀번호 없이 즉시 예약을 삭제합니다.</p>
+                </div>
+            </div>
+
+            <div id="adminForceDeleteDetailBox" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-1.5 leading-relaxed"></div>
+
+            <div id="adminForceDeleteScopeBox" class="hidden mt-3 space-y-1.5 p-2.5 rounded-xl bg-rose-50/60 border border-rose-200/80">
+                <p class="text-[11px] font-bold text-rose-900">🔁 반복 일정 삭제 범위</p>
+                <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 cursor-pointer">
+                    <input type="radio" name="adminDeleteScope" value="single" checked class="text-rose-600 focus:ring-rose-500">
+                    <span class="text-xs font-semibold text-slate-800">이 일정만 삭제 (1건)</span>
+                </label>
+                <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 cursor-pointer">
+                    <input type="radio" name="adminDeleteScope" value="all" class="text-rose-600 focus:ring-rose-500">
+                    <span id="adminForceDeleteAllLabel" class="text-xs font-bold text-rose-700">반복 일정 전체 삭제 (N건)</span>
+                </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" data-close-modal="adminForceDeleteModal"
+                    class="py-3 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                    닫기
+                </button>
+                <button type="button" id="btnExecuteAdminForceDelete"
+                    class="py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs">
+                    삭제 실행
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 5: 장비/시설 이상 제보 모달 -->
+    <!-- ========================================================= -->
+    <div id="facilityReportModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" data-backdrop-close="facilityReportModal">
+        <div class="bg-white w-full max-w-[440px] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-slide-up">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">🔧 장비/시설 이상 제보</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">관리자 화면에 즉시 전달되어 점검 후 조치됩니다.</p>
+                </div>
+                <button type="button" data-close-modal="facilityReportModal" aria-label="닫기"
+                    class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="facilityReportForm" class="p-5 space-y-3.5">
+                <div>
+                    <label for="reportReporterInput" class="block text-xs font-bold text-slate-700 mb-1">제보자 성명 / 기관 <span class="text-rose-500">*</span></label>
+                    <input type="text" id="reportReporterInput" placeholder="예: 클레이 · 김민수" required maxlength="30"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="space-y-2">
+                    <div>
+                        <label for="reportMessageInput" class="block text-xs font-bold text-slate-700 mb-1">이상 내용 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="reportMessageInput" placeholder="예: 메인 앰프 잡음 발생 / 냉난방기 작동 이상" required maxlength="100"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[11px] font-bold text-slate-500">빠른 입력:</span>
+                        <button type="button" data-report-tag="음향/앰프 이상"
+                            class="report-tag-btn px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 text-[11px] font-semibold transition">
+                            음향/앰프
+                        </button>
+                        <button type="button" data-report-tag="건반/악기 이상"
+                            class="report-tag-btn px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 text-[11px] font-semibold transition">
+                            건반/악기
+                        </button>
+                        <button type="button" data-report-tag="냉난방기 이상"
+                            class="report-tag-btn px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 text-[11px] font-semibold transition">
+                            냉난방기
+                        </button>
+                        <button type="button" data-report-tag="조명/비품 부족"
+                            class="report-tag-btn px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 text-[11px] font-semibold transition">
+                            조명/비품
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button type="button" data-close-modal="facilityReportModal"
+                        class="py-3 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                        취소
+                    </button>
+                    <button type="submit" id="btnSubmitFacilityReport"
+                        class="py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition">
+                        제보 등록하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 6: 관리자용 인앱 QR코드 포스터 생성 및 PNG 저장 모달 (800x1040) -->
+    <!-- ========================================================= -->
+    <div id="qrCodeModal" class="fixed inset-0 z-40 hidden bg-slate-900/55 backdrop-blur-[2px] flex items-center justify-center p-4" data-backdrop-close="qrCodeModal">
+        <div class="bg-white w-full max-w-[380px] rounded-2xl shadow-2xl border border-slate-200 p-5 animate-slide-up">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">📱 연습실 출입문 QR코드</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">800×1040 고해질 PNG 포스터로 즉시 저장됩니다.</p>
+                </div>
+                <button type="button" data-close-modal="qrCodeModal" aria-label="닫기"
+                    class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/90 flex flex-col items-center">
+                <canvas id="qrPosterCanvas" width="800" height="1040" class="w-full max-w-[250px] h-auto rounded-xl bg-white border border-slate-200 shadow-2xs"></canvas>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" data-close-modal="qrCodeModal"
+                    class="py-3 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                    닫기
+                </button>
+                <button type="button" id="btnDownloadQrPng"
+                    class="py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 flex items-center justify-center gap-1.5 transition">
+                    <span>PNG 다시 저장</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 7: 관리자 전용 📋 전체 예약 관리 모달 -->
+    <!-- ========================================================= -->
+    <div id="adminManageModal" class="fixed inset-0 z-40 hidden bg-slate-900/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" data-backdrop-close="adminManageModal">
+        <div class="bg-white w-full max-w-[480px] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-slide-up max-h-[92vh] flex flex-col">
+            <!-- 헤더 -->
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>📋 전체 예약 관리</span>
+                        <span id="adminModalTotalBadge" class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold font-num">0건</span>
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">전체 연락처·비밀번호 조회, 예약 삭제 및 시설 제보 관리</p>
+                </div>
+                <button type="button" data-close-modal="adminManageModal" aria-label="닫기"
+                    class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 스크롤 본문 -->
+            <div class="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 bg-slate-50/60">
+                <!-- 1. 접수된 장비/시설 이상 제보 목록 -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 space-y-2.5 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>🔧 장비/시설 이상 제보</span>
+                                <span id="adminReportCountBadge" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10.5px] font-bold font-num">0건</span>
+                            </h4>
+                            <p class="text-[11px] text-slate-500 mt-0.5">현장 점검 후 '조치 완료 (삭제)'로 정리하세요.</p>
+                        </div>
+                        <button type="button" id="btnAdminAddReport"
+                            class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition">
+                            + 제보 추가
+                        </button>
+                    </div>
+                    <div id="adminFacilityReportsList" class="space-y-2"></div>
+                </div>
+
+                <!-- 2. 6개월 이전 과거 기록 일괄 삭제 카드 -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 flex items-center justify-between gap-2.5 shadow-2xs">
+                    <div class="min-w-0">
+                        <h4 class="text-xs font-bold text-slate-900">과거 예약 데이터 정리</h4>
+                        <p id="oldBookingsCountText" class="text-[11px] text-slate-500 mt-0.5">6개월(180일) 이전 과거 기록: 0건</p>
+                    </div>
+                    <button type="button" id="btnOpenCleanupPast"
+                        class="shrink-0 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition active:scale-95">
+                        🗑️ 6개월 이전 과거 기록 일괄 삭제
+                    </button>
+                </div>
+
+                <!-- 3. 필터 탭(전체 / 예정된 예약 / 과거 예약) & 검색 바 -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 space-y-2.5 shadow-2xs">
+                    <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                        <div class="flex items-center gap-1.5 text-[11px]">
+                            <button type="button" id="filterAllBtn"
+                                class="px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                                전체
+                            </button>
+                            <button type="button" id="filterUpcomingBtn"
+                                class="px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white transition">
+                                예정된 예약
+                            </button>
+                            <button type="button" id="filterPastBtn"
+                                class="px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+                                과거 예약
+                            </button>
+                        </div>
+                        <span id="adminFilteredCountBadge" class="text-xs font-bold text-indigo-700 font-num">0건 표시</span>
+                    </div>
+
+                    <div class="relative">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                        </svg>
+                        <input type="text" id="adminSearchInput"
+                            placeholder="기관, 성명, 사용사유, 연락처, 날짜(예: 2026-11) 검색"
+                            class="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white">
+                        <button type="button" id="adminSearchClearBtn"
+                            class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1"
+                            aria-label="검색어 지우기">✕</button>
+                    </div>
+                </div>
+
+                <!-- 4. 전체 예약 카드 목록 -->
+                <div id="adminAllBookingsList" class="space-y-2.5"></div>
+            </div>
+
+            <!-- 하단 닫기 버튼 -->
+            <div class="px-5 py-3 border-t border-slate-100 bg-white shrink-0">
+                <button type="button" data-close-modal="adminManageModal"
+                    class="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 모달 8: 6개월 이전 과거 기록 일괄 삭제 확인 모달 -->
+    <!-- ========================================================= -->
+    <div id="cleanupPastDataModal" class="fixed inset-0 z-50 hidden bg-slate-900/55 backdrop-blur-[2px] flex items-center justify-center p-4" data-backdrop-close="cleanupPastDataModal">
+        <div class="bg-white w-full max-w-[380px] rounded-2xl shadow-2xl border border-slate-200 p-5 animate-slide-up">
+            <div class="text-center">
+                <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">6개월 이전 과거 기록 일괄 삭제</h3>
+                <p id="cleanupPastDataSummary" class="text-xs text-slate-600 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/80 leading-relaxed"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" data-close-modal="cleanupPastDataModal"
+                    class="py-3 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                    취소
+                </button>
+                <button type="button" id="btnConfirmCleanupPast"
+                    class="py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs">
+                    일괄 삭제 실행
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * 1. 관리자 계정 및 시스템 상수 정의
+         * ============================================================================
+         */
+        const ADMIN_ACCOUNTS = [
+            { id: 'admin1', pw: '1234' },
+            { id: 'admin2', pw: '1234' },
+            { id: 'admin3', pw: '1234' }
+        ];
+
+        const ADMIN_STORAGE_KEY = 'onnuri_admin_id';
+        const CACHE_BOOKINGS_KEY = 'onnuri_cached_bookings_v3';
+        const CACHE_REPORTS_KEY = 'onnuri_cached_reports_v3';
+
+        const KOREAN_DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+        const MAX_RECURRENCE_WEEKS = 52;
+        const DEFAULT_RECURRENCE_WEEKS = 4;
+        const PAST_CLEANUP_DAYS = 180; // 6개월(180일) 경과 데이터 정리 기준
+        const DOUBLE_TAP_THRESHOLD_MS = 350; // 터치/클릭 더블탭 판정 임계값 (350ms)
+
+        // 운영 시간 상수: 07:00(420분) ~ 22:00(1320분), 총 900분
+        const OPERATING_START_MINUTES = 7 * 60;  // 420 (07:00)
+        const OPERATING_END_MINUTES = 22 * 60;   // 1320 (22:00)
+        const OPERATING_TOTAL_MINUTES = OPERATING_END_MINUTES - OPERATING_START_MINUTES; // 900분
+
+        // 온누리교회 브러시 엠블럼 SVG 경로 (헤더 및 800x1040 QR 포스터 캔버스 공용)
+        const ONNURI_LOGO_PATHS = {
+            crossVert: 'M47.2 7.5C47.2 5.4 53.8 5.4 53.8 7.6C53.9 18.5 53.7 35.8 53.4 46.8C53.3 49.0 47.6 49.0 47.5 46.7C47.2 35.6 47.1 18.5 47.2 7.5Z',
+            crossHoriz: 'M36.5 18.4C45.2 17.8 57.6 17.8 66.6 18.5C69.1 18.7 69.0 24.4 66.4 24.5C57.4 24.9 45.2 24.9 36.4 24.3C33.8 24.1 33.9 18.6 36.5 18.4Z',
+            blueArc: 'M39.8 28.8C42.9 30.8 43.2 35.5 40.3 37.8C32.4 42.3 25.8 49.6 25.4 59.3C24.9 71.5 34.8 81.2 49.4 81.8C64.2 82.4 76.8 72.4 78.6 58.6C79.7 50.2 77.6 42.4 74.6 36.5C74.1 35.5 75.2 34.7 76.1 35.4C84.2 41.8 89.6 51.4 89.2 62.6C88.5 80.6 71.8 93.8 49.2 93.4C26.8 93.0 10.6 78.6 11.2 59.2C11.7 43.6 21.8 31.8 35.2 27.9C36.9 27.4 38.5 27.9 39.8 28.8Z',
+            greenStroke: 'M32.4 59.4C42.5 57.4 56.8 56.2 67.6 56.6C70.4 56.7 70.6 61.5 67.7 62.1C57.2 63.7 43.4 65.4 33.2 67.2C29.4 67.9 28.5 60.2 32.4 59.4Z'
+        };
+
+        /**
+         * ============================================================================
+         * 2. 날짜 / 시간 / 전화번호 마스킹 / 로컬 스토리지 유틸리티
+         * ============================================================================
+         */
+        function getTodayStr() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        function parseDateStr(dateStr) {
+            const parts = String(dateStr || '').split('-').map(Number);
+            return new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+        }
+
+        function formatDateToStr(dateObj) {
+            return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+        }
+
+        function addDaysToDateStr(dateStr, days) {
+            const d = parseDateStr(dateStr);
+            d.setDate(d.getDate() + days);
+            return formatDateToStr(d);
+        }
+
+        function formatKoreanDateFull(dateStr) {
+            const d = parseDateStr(dateStr);
+            const dayName = KOREAN_DAYS[d.getDay()];
+            return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${dayName})`;
+        }
+
+        function formatKoreanDateShort(dateStr) {
+            const d = parseDateStr(dateStr);
+            const dayName = KOREAN_DAYS[d.getDay()];
+            return `${d.getMonth() + 1}월 ${d.getDate()}일 (${dayName})`;
+        }
+
+        function timeToMinutes(timeStr) {
+            const [h, m] = String(timeStr || '00:00').split(':').map(Number);
+            return (h || 0) * 60 + (m || 0);
+        }
+
+        function minutesToTime(totalMinutes) {
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function formatPhoneNumber(raw) {
+            const digits = String(raw || '').replace(/[^0-9]/g, '').slice(0, 11);
+            if (digits.length <= 3) return digits;
+            if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+            return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+        }
+
+        function maskPhoneNumber(rawPhone) {
+            const digits = String(rawPhone || '').replace(/[^0-9]/g, '');
+            if (!digits) return '';
+            if (digits.length === 11) {
+                return `${digits.slice(0, 3)}-****-${digits.slice(7)}`;
+            }
+            if (digits.length === 10) {
+                return `${digits.slice(0, 3)}-***-${digits.slice(6)}`;
+            }
+            if (digits.length >= 7) {
+                return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+            }
+            return '***-****';
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // 오전(07~12시) / 오후(12~18시) / 저녁(18~22시) 3색 컬러 코딩 테마
+        function getTimePeriodTheme(startTimeStr) {
+            const startMin = timeToMinutes(startTimeStr);
+            if (startMin < 12 * 60) {
+                return {
+                    key: 'morning',
+                    label: '오전',
+                    borderHex: '#0284C7',
+                    barFillHex: '#0284C7',
+                    badgeStyle: 'background-color:#E0F2FE; color:#0369A1; border:1px solid #BAE6FD;',
+                    calBarStyle: 'background-color:#E0F2FE; border-left:2.5px solid #0284C7; color:#0369A1;'
+                };
+            }
+            if (startMin < 18 * 60) {
+                return {
+                    key: 'afternoon',
+                    label: '오후',
+                    borderHex: '#D97706',
+                    barFillHex: '#D97706',
+                    badgeStyle: 'background-color:#FEF3C7; color:#92400E; border:1px solid #FDE68A;',
+                    calBarStyle: 'background-color:#FEF3C7; border-left:2.5px solid #D97706; color:#92400E;'
+                };
+            }
+            return {
+                key: 'evening',
+                label: '저녁',
+                borderHex: '#4F46E5',
+                barFillHex: '#4F46E5',
+                badgeStyle: 'background-color:#EDE9FE; color:#3730A3; border:1px solid #DDD6FE;',
+                calBarStyle: 'background-color:#EDE9FE; border-left:2.5px solid #4F46E5; color:#3730A3;'
+            };
+        }
+
+        function loadCachedArray(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveCachedArray(key, arr) {
+            try {
+                localStorage.setItem(key, JSON.stringify(arr));
+            } catch (e) {
+                // 스토리지 제한 무시
+            }
+        }
+
+        // 전역 애플리케이션 상태
+        const initialToday = getTodayStr();
+        const initialTodayDateObj = parseDateStr(initialToday);
+
+        const state = {
+            currentYear: initialTodayDateObj.getFullYear(),
+            currentMonth: initialTodayDateObj.getMonth(),
+            selectedDate: initialToday,
+            bookings: loadCachedArray(CACHE_BOOKINGS_KEY),
+            reports: loadCachedArray(CACHE_REPORTS_KEY),
+            currentAdminId: localStorage.getItem(ADMIN_STORAGE_KEY) || null,
+            adminPeriodFilter: 'upcoming', // 'all' | 'upcoming' | 'past'
+            isWeeklyRecurring: false,
+            lastBookedPayload: null,
+            cancelTargetId: null,
+            adminDeleteTargetId: null,
+            lastTapDate: null,
+            lastTapTime: 0,
+            hasEverConnected: false
+        };
+
+        let db = null;
+        let bookingsRef = null;
+        let reportsRef = null;
+
+        /**
+         * ============================================================================
+         * 3. 토스트 알림 & 모달 제어 (alert/confirm 미사용)
+         * ============================================================================
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const colors = {
+                success: 'bg-emerald-600 text-white border-emerald-500',
+                error: 'bg-rose-600 text-white border-rose-500',
+                info: 'bg-slate-900 text-white border-slate-700'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-lg border text-xs font-bold flex items-center justify-between gap-2 animate-slide-up ${colors[type] || colors.info}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.2s ease';
+                setTimeout(() => toast.remove(), 220);
+            }, 3000);
+        }
+
+        function openModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (!el) return;
+            el.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (!el) return;
+            el.classList.add('hidden');
+
+            const allModalIds = [
+                'dailyDetailModal',
+                'bookingModal',
+                'adminLoginModal',
+                'userCancelPinModal',
+                'adminForceDeleteModal',
+                'facilityReportModal',
+                'qrCodeModal',
+                'adminManageModal',
+                'cleanupPastDataModal'
+            ];
+            const anyStillOpen = allModalIds.some(id => {
+                const m = document.getElementById(id);
+                return m && !m.classList.contains('hidden');
+            });
+            if (!anyStillOpen) {
+                document.body.style.overflow = '';
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 4. 기관 빠른 선택 ([클레이], [헤세드], [마라나타], [개인] - 제한 없음)
+         * ============================================================================
+         */
+        function selectOrganizationPreset(orgName) {
+            const inputEl = document.getElementById('inputDept');
+            if (!inputEl) return;
+            inputEl.value = orgName;
+            syncOrganizationChipHighlight();
+        }
+
+        function syncOrganizationChipHighlight() {
+            const inputEl = document.getElementById('inputDept');
+            const currentVal = (inputEl ? inputEl.value : '').trim();
+            document.querySelectorAll('.org-preset-btn').forEach(btn => {
+                const chipVal = btn.getAttribute('data-org-chip');
+                if (chipVal === currentVal) {
+                    btn.className = 'org-preset-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-600 bg-indigo-600 text-white shadow-2xs transition active:scale-95';
+                } else {
+                    btn.className = 'org-preset-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition active:scale-95';
+                }
+            });
+        }
+
+        /**
+         * ============================================================================
+         * 5. 헤더 관리자 로그인/로그아웃 상태 렌더링
+         * ============================================================================
+         */
+        function renderHeaderAuth() {
+            const btnOpenAdminLogin = document.getElementById('btnOpenAdminLogin');
+            const headerAdminActionBar = document.getElementById('headerAdminActionBar');
+            const headerAdminBadgeText = document.getElementById('headerAdminBadgeText');
+            const headerManageIssueDot = document.getElementById('headerManageIssueDot');
+
+            if (!btnOpenAdminLogin || !headerAdminActionBar) return;
+
+            if (state.currentAdminId) {
+                btnOpenAdminLogin.classList.add('hidden');
+                headerAdminActionBar.classList.remove('hidden');
+                if (headerAdminBadgeText) {
+                    headerAdminBadgeText.textContent = `🛡️ 관리자 (${state.currentAdminId})`;
+                }
+                if (headerManageIssueDot) {
+                    if (state.reports.length > 0) headerManageIssueDot.classList.remove('hidden');
+                    else headerManageIssueDot.classList.add('hidden');
+                }
+            } else {
+                btnOpenAdminLogin.classList.remove('hidden');
+                headerAdminActionBar.classList.add('hidden');
+            }
+        }
+
+        function openAdminLoginModal() {
+            const idInput = document.getElementById('adminIdInput');
+            const pwInput = document.getElementById('adminPwInput');
+            const errEl = document.getElementById('adminLoginError');
+            if (idInput) idInput.value = '';
+            if (pwInput) pwInput.value = '';
+            if (errEl) errEl.classList.add('hidden');
+            openModal('adminLoginModal');
+            setTimeout(() => {
+                if (idInput) idInput.focus();
+            }, 60);
+        }
+
+        function handleAdminLoginSubmit(event) {
+            event.preventDefault();
+            const enteredId = document.getElementById('adminIdInput').value.trim();
+            const enteredPw = document.getElementById('adminPwInput').value.trim();
+            const matched = ADMIN_ACCOUNTS.find(acc => acc.id === enteredId && acc.pw === enteredPw);
+
+            if (!matched) {
+                document.getElementById('adminLoginError').classList.remove('hidden');
+                return;
+            }
+
+            state.currentAdminId = matched.id;
+            localStorage.setItem(ADMIN_STORAGE_KEY, matched.id);
+            closeModal('adminLoginModal');
+            showToast(`관리자(${matched.id})로 로그인되었습니다.`, 'success');
+            renderApp();
+        }
+
+        function handleAdminLogout() {
+            state.currentAdminId = null;
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            closeModal('adminManageModal');
+            showToast('관리자 로그아웃되었습니다.', 'info');
+            renderApp();
+        }
+
+        /**
+         * ============================================================================
+         * 6. 월간 캘린더 렌더링 (단일 클릭 선택 + 350ms 더블탭 상세 팝업)
+         * ============================================================================
+         */
+        function getBookingsForDate(dateStr) {
+            return state.bookings
+                .filter(b => b.date === dateStr)
+                .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+        }
+
+        function renderCalendar() {
+            const titleEl = document.getElementById('calendarMonthTitle');
+            const gridEl = document.getElementById('calendarGrid');
+            if (!titleEl || !gridEl) return;
+
+            const year = state.currentYear;
+            const month = state.currentMonth;
+            titleEl.textContent = `${year}년 ${month + 1}월`;
+
+            const firstDayOfWeek = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = getTodayStr();
+
+            const bookingsByDate = {};
+            state.bookings.forEach(b => {
+                if (!bookingsByDate[b.date]) bookingsByDate[b.date] = [];
+                bookingsByDate[b.date].push(b);
+            });
+            Object.keys(bookingsByDate).forEach(d => {
+                bookingsByDate[d].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+            });
+
+            let html = '';
+
+            // 앞쪽 빈 칸
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                html += `<div class="min-h-[82px] sm:min-h-[90px] rounded-xl bg-slate-50/40"></div>`;
+            }
+
+            // 1일 ~ 말일 셀
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayOfWeek = (firstDayOfWeek + day - 1) % 7;
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === state.selectedDate;
+                const dayBookings = bookingsByDate[dateStr] || [];
+
+                let dateNumClass = 'text-slate-800';
+                if (dayOfWeek === 0) dateNumClass = 'text-rose-500';
+                if (dayOfWeek === 6) dateNumClass = 'text-blue-500';
+
+                let cellBorderClass = 'border-slate-100 bg-white hover:bg-slate-50/90';
+                if (isSelected) {
+                    cellBorderClass = 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50/35';
+                }
+
+                const dateBadgeHtml = isToday
+                    ? `<span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-[11px] font-num inline-flex items-center justify-center">${day}</span>`
+                    : `<span class="text-[11.5px] font-bold font-num ${dateNumClass} leading-5">${day}</span>`;
+
+                // 최대 3개 일정 바 ([기관] [사용사유])
+                const maxBars = 3;
+                const visibleBookings = dayBookings.slice(0, maxBars);
+                const extraCount = dayBookings.length - maxBars;
+
+                let barsHtml = '';
+                visibleBookings.forEach(item => {
+                    const theme = getTimePeriodTheme(item.startTime);
+                    const labelText = `[${item.department}] ${item.purpose}`.trim();
+                    barsHtml += `
+                        <div class="cal-event-bar w-full px-1 py-[1.5px] rounded-r-[3px] text-[9.5px] leading-tight font-semibold text-left"
+                             style="${theme.calBarStyle}">
+                            ${escapeHtml(labelText)}
+                        </div>
+                    `;
+                });
+
+                if (extraCount > 0) {
+                    barsHtml += `<div class="text-[9.5px] font-bold font-num text-slate-500 text-left pl-0.5 leading-none">+${extraCount}</div>`;
+                }
+
+                html += `
+                    <button type="button" data-cal-date="${dateStr}"
+                        class="calendar-day-btn min-h-[82px] sm:min-h-[90px] p-1 rounded-xl border ${cellBorderClass} flex flex-col items-stretch justify-start gap-[2px] transition active:scale-[0.98] overflow-hidden">
+                        <div class="flex items-center justify-center mb-[1px]">
+                            ${dateBadgeHtml}
+                        </div>
+                        <div class="flex flex-col gap-[2px] w-full overflow-hidden">
+                            ${barsHtml}
+                        </div>
+                    </button>
+                `;
+            }
+
+            gridEl.innerHTML = html;
+        }
+
+        function handleCalendarDateTap(dateStr) {
+            const now = Date.now();
+            const isDoubleTap = (state.lastTapDate === dateStr) && (now - state.lastTapTime <= DOUBLE_TAP_THRESHOLD_MS);
+
+            state.lastTapDate = dateStr;
+            state.lastTapTime = now;
+
+            state.selectedDate = dateStr;
+            renderCalendar();
+            renderSelectedDay();
+
+            if (isDoubleTap) {
+                state.lastTapDate = null;
+                state.lastTapTime = 0;
+                openDailyDetailModal(dateStr);
+            }
+        }
+
+        function changeMonth(delta) {
+            let nextMonth = state.currentMonth + delta;
+            let nextYear = state.currentYear;
+            if (nextMonth < 0) {
+                nextMonth = 11;
+                nextYear -= 1;
+            } else if (nextMonth > 11) {
+                nextMonth = 0;
+                nextYear += 1;
+            }
+            state.currentYear = nextYear;
+            state.currentMonth = nextMonth;
+            renderCalendar();
+        }
+
+        function goToToday() {
+            const todayStr = getTodayStr();
+            const d = parseDateStr(todayStr);
+            state.currentYear = d.getFullYear();
+            state.currentMonth = d.getMonth();
+            state.selectedDate = todayStr;
+            renderCalendar();
+            renderSelectedDay();
+        }
+
+        /**
+         * ============================================================================
+         * 7. 선택된 날짜 타임라인 바 (07:00~22:00 구간, 하단 라벨 09:00 ~ 21:00 균형 배치)
+         * ============================================================================
+         */
+        function buildContinuousTimelineHtml(dayBookings) {
+            // 07:00(420분) ~ 22:00(1320분) = 총 900분 기준 백분율 좌표
+            const pct09 = ((9 * 60 - OPERATING_START_MINUTES) / OPERATING_TOTAL_MINUTES) * 100;  // 13.3333%
+            const pct12 = ((12 * 60 - OPERATING_START_MINUTES) / OPERATING_TOTAL_MINUTES) * 100; // 33.3333%
+            const pct15 = ((15 * 60 - OPERATING_START_MINUTES) / OPERATING_TOTAL_MINUTES) * 100; // 53.3333%
+            const pct18 = ((18 * 60 - OPERATING_START_MINUTES) / OPERATING_TOTAL_MINUTES) * 100; // 73.3333%
+            const pct21 = ((21 * 60 - OPERATING_START_MINUTES) / OPERATING_TOTAL_MINUTES) * 100; // 93.3333%
+
+            // 08:00 ~ 21:00 1시간 단위 수직 눈금선 (12:00, 18:00은 굵은 경계선으로 별도 렌더링)
+            let hourTicksHtml = '';
+            for (let hour = 8; hour <= 21; hour++) {
+                if (hour === 12 || hour === 18) continue;
+                const leftPct = (((hour * 60) - OPERATING_START_MINUTES) / OPERATING_TOTAL_MINUTES) * 100;
+                hourTicksHtml += `<div class="absolute top-0 bottom-0 w-px bg-slate-300/70 pointer-events-none z-10" style="left:${leftPct.toFixed(4)}%;"></div>`;
+            }
+
+            // 예약된 점유 구간 막대들
+            let occupiedSegmentsHtml = '';
+            dayBookings.forEach(b => {
+                const startMin = Math.max(OPERATING_START_MINUTES, timeToMinutes(b.startTime));
+                const endMin = Math.min(OPERATING_END_MINUTES, timeToMinutes(b.endTime));
+                if (endMin <= startMin) return;
+
+                const leftPct = ((startMin - OPERATING_START_MINUTES) / OPERATING_TOTAL_MINUTES) * 100;
+                const widthPct = ((endMin - startMin) / OPERATING_TOTAL_MINUTES) * 100;
+                const theme = getTimePeriodTheme(b.startTime);
+
+                occupiedSegmentsHtml += `
+                    <div class="absolute top-0 bottom-0 z-[5] border-x border-white/60 transition-all"
+                         title="${escapeHtml(b.startTime)}~${escapeHtml(b.endTime)} [${escapeHtml(b.department)}]"
+                         style="left:${leftPct.toFixed(4)}%; width:${widthPct.toFixed(4)}%; background-color:${theme.barFillHex};">
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="select-none">
+                    <!-- 상단 주요 경계 시간 강조 배지 (12:00 / 18:00) -->
+                    <div class="relative h-4 mb-1 font-num text-[10px] font-bold">
+                        <span class="absolute -translate-x-1/2 px-1.5 py-0.5 rounded bg-slate-200/90 text-slate-700 leading-none" style="left:${pct12.toFixed(4)}%;">12:00</span>
+                        <span class="absolute -translate-x-1/2 px-1.5 py-0.5 rounded bg-slate-200/90 text-slate-700 leading-none" style="left:${pct18.toFixed(4)}%;">18:00</span>
+                    </div>
+
+                    <!-- 연속 점유 타임라인 바 본체 (07:00 ~ 22:00) -->
+                    <div class="relative h-5 w-full rounded-lg bg-slate-200/90 border border-slate-300/80 overflow-visible">
+                        <div class="absolute inset-0 rounded-[7px] overflow-hidden">
+                            ${occupiedSegmentsHtml}
+                            ${hourTicksHtml}
+                        </div>
+
+                        <!-- 12:00 주요 경계 수직 구분선 -->
+                        <div class="absolute -top-1 -bottom-1 w-[2px] bg-slate-700 z-20 pointer-events-none" style="left:${pct12.toFixed(4)}%;"></div>
+
+                        <!-- 18:00 주요 경계 수직 구분선 -->
+                        <div class="absolute -top-1 -bottom-1 w-[2px] bg-slate-700 z-20 pointer-events-none" style="left:${pct18.toFixed(4)}%;"></div>
+                    </div>
+
+                    <!-- 하단 시간 축 라벨 (09:00, 12:00, 15:00, 18:00, 21:00 - 양 끝 07:00/22:00 미표시) -->
+                    <div class="relative h-4 mt-1 font-num text-[10px] text-slate-500 font-medium">
+                        <span class="absolute -translate-x-1/2" style="left:${pct09.toFixed(4)}%;">09:00</span>
+                        <span class="absolute -translate-x-1/2 font-bold text-slate-700" style="left:${pct12.toFixed(4)}%;">12:00</span>
+                        <span class="absolute -translate-x-1/2" style="left:${pct15.toFixed(4)}%;">15:00</span>
+                        <span class="absolute -translate-x-1/2 font-bold text-slate-700" style="left:${pct18.toFixed(4)}%;">18:00</span>
+                        <span class="absolute -translate-x-1/2" style="left:${pct21.toFixed(4)}%;">21:00</span>
+                    </div>
+
+                    <!-- 하단 오전 / 오후 / 저녁 구간 중앙 라벨 -->
+                    <div class="relative h-3.5 mt-0.5 text-[10px] font-bold">
+                        <span class="absolute -translate-x-1/2 text-sky-700" style="left:${(pct12 / 2).toFixed(2)}%;">오전</span>
+                        <span class="absolute -translate-x-1/2 text-amber-700" style="left:${((pct12 + pct18) / 2).toFixed(2)}%;">오후</span>
+                        <span class="absolute -translate-x-1/2 text-indigo-700" style="left:${((pct18 + 100) / 2).toFixed(2)}%;">저녁</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * ============================================================================
+         * 8. 예약 카드 렌더링 ('퇴실 완료' 없음, 일반 사용자 연락처 마스킹 / 관리자 전체 공개)
+         * ============================================================================
+         */
+        function buildBookingCardHtml(booking, options = {}) {
+            const { showDateHeader = false, showAdminPin = false } = options;
+            const theme = getTimePeriodTheme(booking.startTime);
+            const isAdmin = Boolean(state.currentAdminId);
+            const seriesGroupId = booking.repeatGroupId || booking.groupId || null;
+            const seriesCount = seriesGroupId
+                ? state.bookings.filter(x => (x.repeatGroupId || x.groupId) === seriesGroupId).length
+                : 0;
+
+            const recurringBadgeHtml = seriesGroupId
+                ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold">🔁 반복 (${seriesCount}회)</span>`
+                : '';
+
+            const dateHeaderHtml = showDateHeader
+                ? `<div class="text-[11px] font-bold text-indigo-600 font-num mb-1">${escapeHtml(formatKoreanDateFull(booking.date))}</div>`
+                : '';
+
+            // 연락처 표시: 일반 사용자는 마스킹(010-****-5678), 관리자는 원본 번호 + 바로 통화 링크
+            let phoneSectionHtml = '';
+            if (booking.phone) {
+                if (isAdmin) {
+                    const telDigits = escapeHtml(booking.phone.replace(/[^0-9]/g, ''));
+                    phoneSectionHtml = `
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-slate-500">연락처:</span>
+                                <a href="tel:${telDigits}" class="font-num font-bold text-indigo-600 hover:underline">📞 ${escapeHtml(booking.phone)}</a>
+                            </div>
+                            ${showAdminPin && booking.pin ? `<span class="text-[11px] font-num font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">PIN: ${escapeHtml(booking.pin)}</span>` : ''}
+                        </div>
+                    `;
+                } else {
+                    phoneSectionHtml = `
+                        <p class="text-xs text-slate-500 mt-0.5 font-num">
+                            연락처: <span class="text-slate-600">${escapeHtml(maskPhoneNumber(booking.phone))}</span>
+                        </p>
+                    `;
+                }
+            }
+
+            const cancelActionAttr = isAdmin ? 'admin-force-delete' : 'user-cancel';
+            const cancelBtnStyle = isAdmin
+                ? 'px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition'
+                : 'px-2.5 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-[11px] font-bold transition';
+
+            return `
+                <div class="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs" style="border-left: 4px solid ${theme.borderHex};">
+                    ${dateHeaderHtml}
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0 w-full">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-sm font-bold text-slate-900 font-num">${escapeHtml(booking.startTime)} ~ ${escapeHtml(booking.endTime)}</span>
+                                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold" style="${theme.badgeStyle}">${theme.label}</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200/80 text-[11px] font-bold">${escapeHtml(booking.department)}</span>
+                                ${recurringBadgeHtml}
+                            </div>
+                            <p class="text-[13.5px] font-bold text-slate-900 mt-1.5 leading-snug">
+                                ${escapeHtml(booking.purpose)}
+                            </p>
+                            <p class="text-xs text-slate-500 mt-1">
+                                신청자: <span class="font-semibold text-slate-700">${escapeHtml(booking.name)}</span>
+                            </p>
+                            ${phoneSectionHtml}
+                        </div>
+                    </div>
+
+                    <div class="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-end gap-1.5 flex-wrap">
+                        <button type="button" data-action="download-ics" data-id="${escapeHtml(booking.id)}"
+                            class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/90 text-[11px] font-bold transition">
+                            📅 캘린더 추가
+                        </button>
+                        <button type="button" data-action="${cancelActionAttr}" data-id="${escapeHtml(booking.id)}"
+                            class="${cancelBtnStyle}">
+                            취소
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSelectedDay() {
+            const titleEl = document.getElementById('selectedDateTitle');
+            const todayBadgeEl = document.getElementById('selectedDateTodayBadge');
+            const summaryEl = document.getElementById('selectedDateSummary');
+            const timelineEl = document.getElementById('occupancyTimelineContainer');
+            const listEl = document.getElementById('dailyBookingList');
+
+            if (!titleEl || !timelineEl || !listEl) return;
+
+            const dateStr = state.selectedDate;
+            const dayBookings = getBookingsForDate(dateStr);
+            const isToday = dateStr === getTodayStr();
+
+            titleEl.textContent = formatKoreanDateShort(dateStr);
+            if (todayBadgeEl) {
+                if (isToday) todayBadgeEl.classList.remove('hidden');
+                else todayBadgeEl.classList.add('hidden');
+            }
+
+            if (summaryEl) {
+                summaryEl.textContent = dayBookings.length > 0
+                    ? `총 ${dayBookings.length}건의 예약이 확정되어 있습니다`
+                    : '선택된 날짜 예약 현황 · 모든 시간대 이용 가능';
+            }
+
+            timelineEl.innerHTML = buildContinuousTimelineHtml(dayBookings);
+
+            if (dayBookings.length === 0) {
+                listEl.innerHTML = `
+                    <div class="py-8 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60">
+                        <p class="text-xs font-semibold text-slate-500">이 날짜에는 등록된 예약이 없습니다.</p>
+                        <p class="text-[11px] text-slate-400 mt-1">하단 '연습실 예약하기' 버튼으로 바로 예약할 수 있습니다.</p>
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = dayBookings.map(b => buildBookingCardHtml(b, { showDateHeader: false })).join('');
+            }
+        }
+
+        function openDailyDetailModal(dateStr) {
+            const dayBookings = getBookingsForDate(dateStr);
+            const isToday = dateStr === getTodayStr();
+
+            document.getElementById('detailModalDateTitle').textContent = `${formatKoreanDateFull(dateStr)} 예약 현황`;
+            const todayBadge = document.getElementById('detailModalTodayBadge');
+            if (isToday) todayBadge.classList.remove('hidden');
+            else todayBadge.classList.add('hidden');
+
+            document.getElementById('detailModalSummaryText').textContent = `확정 예약 ${dayBookings.length}건`;
+            document.getElementById('detailModalTimelineContainer').innerHTML = buildContinuousTimelineHtml(dayBookings);
+
+            const listEl = document.getElementById('detailModalBookingList');
+            if (dayBookings.length === 0) {
+                listEl.innerHTML = `
+                    <div class="py-8 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
+                        <p class="text-xs font-semibold text-slate-500">등록된 일정이 없습니다.</p>
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = dayBookings.map(b => buildBookingCardHtml(b, { showDateHeader: false })).join('');
+            }
+
+            openModal('dailyDetailModal');
+        }
+
+        /**
+         * ============================================================================
+         * 9. 예약 신청 모달 & 매주 반복 & 충돌 검증 & Firebase 즉시 확정
+         * ============================================================================
+         */
+        function populateTimeSelectOptions() {
+            const startSel = document.getElementById('inputStartTime');
+            const endSel = document.getElementById('inputEndTime');
+            if (!startSel || !endSel) return;
+
+            let startHtml = '';
+            for (let m = OPERATING_START_MINUTES; m <= OPERATING_END_MINUTES - 30; m += 30) {
+                const t = minutesToTime(m);
+                startHtml += `<option value="${t}" ${t === '09:00' ? 'selected' : ''}>${t}</option>`;
+            }
+            startSel.innerHTML = startHtml;
+
+            let endHtml = '';
+            for (let m = OPERATING_START_MINUTES + 30; m <= OPERATING_END_MINUTES; m += 30) {
+                const t = minutesToTime(m);
+                endHtml += `<option value="${t}" ${t === '11:00' ? 'selected' : ''}>${t}</option>`;
+            }
+            endSel.innerHTML = endHtml;
+        }
+
+        function openBookingModal(targetDateStr) {
+            const dateToUse = targetDateStr || state.selectedDate || getTodayStr();
+            const todayStr = getTodayStr();
+            const isAdmin = Boolean(state.currentAdminId);
+
+            // 일반 사용자는 과거 날짜 예약 차단
+            if (!isAdmin && dateToUse < todayStr) {
+                showToast('과거 날짜는 예약할 수 없습니다. 오늘 이후 날짜를 선택해 주세요.', 'error');
+                return;
+            }
+
+            document.getElementById('bookingForm').classList.remove('hidden');
+            document.getElementById('bookingSuccessView').classList.add('hidden');
+            document.getElementById('bookingConflictWarning').classList.add('hidden');
+
+            const dateInput = document.getElementById('inputDate');
+            const adminHint = document.getElementById('adminPastDateHint');
+            dateInput.value = dateToUse;
+            if (isAdmin) {
+                dateInput.removeAttribute('min');
+                adminHint.classList.remove('hidden');
+            } else {
+                dateInput.min = todayStr;
+                adminHint.classList.add('hidden');
+            }
+
+            document.getElementById('inputStartTime').value = '09:00';
+            document.getElementById('inputEndTime').value = '11:00';
+            document.getElementById('inputDept').value = '';
+            document.getElementById('inputPurpose').value = '';
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputPhone').value = '';
+            document.getElementById('inputPin').value = '';
+            document.getElementById('inputCheckoutCheck').checked = false;
+
+            const recurringCheckbox = document.getElementById('toggleWeeklyRecurring');
+            if (recurringCheckbox) recurringCheckbox.checked = false;
+            setWeeklyRecurringEnabled(false, true);
+
+            syncOrganizationChipHighlight();
+            validateScheduleAvailability();
+            openModal('bookingModal');
+        }
+
+        function setWeeklyRecurringEnabled(enabled, skipValidate = false) {
+            state.isWeeklyRecurring = enabled;
+            const optionsBox = document.getElementById('recurrenceOptionsBox');
+            const endDateInput = document.getElementById('inputRecurrenceEndDate');
+            const startDateStr = document.getElementById('inputDate').value || getTodayStr();
+
+            if (enabled) {
+                optionsBox.classList.remove('hidden');
+                const maxEndStr = addDaysToDateStr(startDateStr, MAX_RECURRENCE_WEEKS * 7);
+                endDateInput.min = startDateStr;
+                endDateInput.max = maxEndStr;
+                if (!endDateInput.value || endDateInput.value < startDateStr || endDateInput.value > maxEndStr) {
+                    endDateInput.value = addDaysToDateStr(startDateStr, (DEFAULT_RECURRENCE_WEEKS - 1) * 7);
+                }
+            } else {
+                optionsBox.classList.add('hidden');
+            }
+
+            if (!skipValidate) {
+                validateScheduleAvailability();
+            }
+        }
+
+        function setQuickRecurrenceWeeks(weeks) {
+            const startDateStr = document.getElementById('inputDate').value || getTodayStr();
+            const maxEndStr = addDaysToDateStr(startDateStr, MAX_RECURRENCE_WEEKS * 7);
+            const targetDays = Math.min(MAX_RECURRENCE_WEEKS * 7, Math.max(0, (weeks - 1) * 7));
+            let targetEndStr = addDaysToDateStr(startDateStr, targetDays);
+            if (targetEndStr > maxEndStr) targetEndStr = maxEndStr;
+
+            const endDateInput = document.getElementById('inputRecurrenceEndDate');
+            if (endDateInput) endDateInput.value = targetEndStr;
+            validateScheduleAvailability();
+        }
+
+        function onStartDateChanged() {
+            const startDateStr = document.getElementById('inputDate').value;
+            if (!startDateStr) return;
+
+            if (state.isWeeklyRecurring) {
+                const endDateInput = document.getElementById('inputRecurrenceEndDate');
+                const maxEndStr = addDaysToDateStr(startDateStr, MAX_RECURRENCE_WEEKS * 7);
+                endDateInput.min = startDateStr;
+                endDateInput.max = maxEndStr;
+                if (!endDateInput.value || endDateInput.value < startDateStr) {
+                    endDateInput.value = addDaysToDateStr(startDateStr, (DEFAULT_RECURRENCE_WEEKS - 1) * 7);
+                } else if (endDateInput.value > maxEndStr) {
+                    endDateInput.value = maxEndStr;
+                }
+            }
+            validateScheduleAvailability();
+        }
+
+        function onStartTimeChanged() {
+            const startSel = document.getElementById('inputStartTime');
+            const endSel = document.getElementById('inputEndTime');
+            const startMin = timeToMinutes(startSel.value);
+            const endMin = timeToMinutes(endSel.value);
+
+            if (endMin <= startMin) {
+                const nextEnd = Math.min(OPERATING_END_MINUTES, startMin + 120);
+                endSel.value = minutesToTime(nextEnd);
+            }
+            validateScheduleAvailability();
+        }
+
+        function generateTargetDateList() {
+            const startDateStr = document.getElementById('inputDate').value;
+            if (!startDateStr) return [];
+
+            if (!state.isWeeklyRecurring) {
+                return [startDateStr];
+            }
+
+            const endDateInput = document.getElementById('inputRecurrenceEndDate');
+            const endDateStr = (endDateInput && endDateInput.value) ? endDateInput.value : startDateStr;
+            const maxEndStr = addDaysToDateStr(startDateStr, MAX_RECURRENCE_WEEKS * 7);
+            const effectiveEndStr = endDateStr > maxEndStr ? maxEndStr : endDateStr;
+
+            const dates = [];
+            let cursor = startDateStr;
+            while (cursor <= effectiveEndStr) {
+                dates.push(cursor);
+                cursor = addDaysToDateStr(cursor, 7);
+            }
+            return dates.length > 0 ? dates : [startDateStr];
+        }
+
+        function updateRecurrencePreview(targetDates) {
+            if (!state.isWeeklyRecurring || targetDates.length === 0) return;
+            const firstDateObj = parseDateStr(targetDates[0]);
+            const dayName = KOREAN_DAYS[firstDateObj.getDay()];
+            document.getElementById('recurrenceSummaryText').textContent = `매주 ${dayName}요일 · 총 ${targetDates.length}회 예약`;
+
+            const shortLabels = targetDates.slice(0, 6).map(d => {
+                const p = d.split('-');
+                return `${Number(p[1])}/${Number(p[2])}`;
+            });
+            const suffix = targetDates.length > 6 ? ` 외 ${targetDates.length - 6}회` : '';
+            document.getElementById('recurrenceDatesPreview').textContent = `예약일: ${shortLabels.join(', ')}${suffix}`;
+        }
+
+        function validateScheduleAvailability() {
+            const warningBox = document.getElementById('bookingConflictWarning');
+            const warningMsg = document.getElementById('bookingConflictMessage');
+            const submitBtn = document.getElementById('btnSubmitBooking');
+
+            const startDateStr = document.getElementById('inputDate').value;
+            const startTime = document.getElementById('inputStartTime').value;
+            const endTime = document.getElementById('inputEndTime').value;
+            const todayStr = getTodayStr();
+            const isAdmin = Boolean(state.currentAdminId);
+
+            const targetDates = generateTargetDateList();
+            updateRecurrencePreview(targetDates);
+
+            let errorReason = '';
+
+            if (!startDateStr) {
+                errorReason = '예약 날짜를 선택해 주세요.';
+            } else if (!isAdmin && startDateStr < todayStr) {
+                errorReason = '과거 날짜는 예약할 수 없습니다.';
+            } else {
+                const startMin = timeToMinutes(startTime);
+                const endMin = timeToMinutes(endTime);
+                if (endMin <= startMin) {
+                    errorReason = '종료 시간은 시작 시간보다 늦어야 합니다.';
+                } else {
+                    const conflicts = [];
+                    targetDates.forEach(dStr => {
+                        const existing = getBookingsForDate(dStr);
+                        existing.forEach(b => {
+                            const bStart = timeToMinutes(b.startTime);
+                            const bEnd = timeToMinutes(b.endTime);
+                            if (startMin < bEnd && endMin > bStart) {
+                                conflicts.push(`${formatKoreanDateShort(dStr)} (${b.startTime}~${b.endTime} ${b.department})`);
+                            }
+                        });
+                    });
+
+                    if (conflicts.length > 0) {
+                        errorReason = `시간 중복: ${conflicts.slice(0, 2).join(', ')}${conflicts.length > 2 ? ` 외 ${conflicts.length - 2}건` : ''}`;
+                    }
+                }
+            }
+
+            if (errorReason) {
+                warningMsg.textContent = errorReason;
+                warningBox.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                return false;
+            } else {
+                warningBox.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                return true;
+            }
+        }
+
+        async function submitBooking(event) {
+            event.preventDefault();
+
+            if (!validateScheduleAvailability()) {
+                return;
+            }
+
+            const startDateStr = document.getElementById('inputDate').value;
+            const startTime = document.getElementById('inputStartTime').value;
+            const endTime = document.getElementById('inputEndTime').value;
+            const department = document.getElementById('inputDept').value.trim();
+            const purpose = document.getElementById('inputPurpose').value.trim();
+            const name = document.getElementById('inputName').value.trim();
+            const phone = formatPhoneNumber(document.getElementById('inputPhone').value);
+            const pin = document.getElementById('inputPin').value.trim();
+            const checkoutChecked = document.getElementById('inputCheckoutCheck').checked;
+
+            if (!department) {
+                showToast('기관을 입력하거나 선택해 주세요.', 'error');
+                document.getElementById('inputDept').focus();
+                return;
+            }
+            if (!purpose) {
+                showToast('사용 사유를 입력해 주세요.', 'error');
+                document.getElementById('inputPurpose').focus();
+                return;
+            }
+            if (!name) {
+                showToast('신청자 성명을 입력해 주세요.', 'error');
+                document.getElementById('inputName').focus();
+                return;
+            }
+            if (phone.replace(/[^0-9]/g, '').length < 9) {
+                showToast('올바른 연락처를 입력해 주세요.', 'error');
+                document.getElementById('inputPhone').focus();
+                return;
+            }
+            if (!/^[0-9]{4}$/.test(pin)) {
+                showToast('취소용 비밀번호는 숫자 4자리로 입력해 주세요.', 'error');
+                document.getElementById('inputPin').focus();
+                return;
+            }
+            if (!checkoutChecked) {
+                showToast('퇴실 시 음향장비·냉난방기 전원 차단 확인에 체크해 주세요.', 'error');
+                return;
+            }
+
+            const targetDates = generateTargetDateList();
+            const isRecurring = targetDates.length > 1;
+            const repeatGroupId = isRecurring ? `grp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` : null;
+            const createdAt = Date.now();
+
+            const submitBtn = document.getElementById('btnSubmitBooking');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '예약 확정 중...';
+
+            try {
+                const newRecords = [];
+                const updates = {};
+
+                targetDates.forEach((dStr, idx) => {
+                    const newKey = bookingsRef
+                        ? bookingsRef.push().key
+                        : `local_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 6)}`;
+
+                    const record = {
+                        date: dStr,
+                        startTime,
+                        endTime,
+                        department,
+                        purpose,
+                        name,
+                        userName: name,
+                        phone,
+                        pin,
+                        status: 'confirmed',
+                        repeatGroupId,
+                        groupId: repeatGroupId,
+                        createdAt
+                    };
+
+                    updates[newKey] = record;
+                    newRecords.push({ id: newKey, ...record });
+                });
+
+                if (bookingsRef) {
+                    await bookingsRef.update(updates);
+                } else {
+                    state.bookings = [...state.bookings, ...newRecords];
+                    saveCachedArray(CACHE_BOOKINGS_KEY, state.bookings);
+                    renderApp();
+                }
+
+                // 선택 날짜를 첫 예약일로 이동
+                state.selectedDate = startDateStr;
+                const dObj = parseDateStr(startDateStr);
+                state.currentYear = dObj.getFullYear();
+                state.currentMonth = dObj.getMonth();
+                renderCalendar();
+                renderSelectedDay();
+
+                state.lastBookedPayload = {
+                    firstBooking: newRecords[0],
+                    targetDates
+                };
+                showBookingSuccessView(newRecords[0], targetDates);
+                showToast('예약이 즉시 확정되었습니다!', 'success');
+            } catch (err) {
+                console.error('예약 저장 실패:', err);
+                showToast('예약 저장 중 오류가 발생했습니다. 네트워크를 확인해 주세요.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '예약 확정하기';
+            }
+        }
+
+        function showBookingSuccessView(firstBooking, targetDates) {
+            document.getElementById('bookingForm').classList.add('hidden');
+            const successView = document.getElementById('bookingSuccessView');
+            successView.classList.remove('hidden');
+
+            const isRecurring = targetDates.length > 1;
+            const dateLine = isRecurring
+                ? `${formatKoreanDateFull(targetDates[0])} ~ ${formatKoreanDateFull(targetDates[targetDates.length - 1])} (매주 총 ${targetDates.length}회)`
+                : formatKoreanDateFull(firstBooking.date);
+
+            document.getElementById('bookingSuccessSummaryCard').innerHTML = `
+                <div class="flex justify-between gap-2">
+                    <span class="text-slate-500">예약 일시</span>
+                    <span class="font-bold text-slate-900 text-right">${escapeHtml(dateLine)}</span>
+                </div>
+                <div class="flex justify-between gap-2">
+                    <span class="text-slate-500">사용 시간</span>
+                    <span class="font-bold font-num text-indigo-700">${escapeHtml(firstBooking.startTime)} ~ ${escapeHtml(firstBooking.endTime)}</span>
+                </div>
+                <div class="flex justify-between gap-2">
+                    <span class="text-slate-500">기관 / 사유</span>
+                    <span class="font-bold text-slate-900 text-right">[${escapeHtml(firstBooking.department)}] ${escapeHtml(firstBooking.purpose)}</span>
+                </div>
+                <div class="flex justify-between gap-2">
+                    <span class="text-slate-500">신청자</span>
+                    <span class="font-semibold text-slate-800">${escapeHtml(firstBooking.name)}</span>
+                </div>
+            `;
+
+            const isKakao = /KAKAOTALK/i.test(navigator.userAgent || '');
+            const kakaoTip = document.getElementById('kakaoInAppTipBox');
+            if (isKakao) kakaoTip.classList.remove('hidden');
+            else kakaoTip.classList.add('hidden');
+        }
+
+        /**
+         * ============================================================================
+         * 10. 개인 스마트폰 캘린더(.ics) 다운로드 (Asia/Seoul + RRULE)
+         * ============================================================================
+         */
+        function formatIcsDateTimeLocal(dateStr, timeStr) {
+            const dClean = String(dateStr).replace(/-/g, '');
+            const tClean = String(timeStr).replace(/:/g, '') + '00';
+            return `${dClean}T${tClean}`;
+        }
+
+        function escapeIcsText(str) {
+            return String(str || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/;/g, '\\;')
+                .replace(/,/g, '\\,')
+                .replace(/\n/g, '\\n');
+        }
+
+        function downloadBookingIcs(booking, customDatesList = null) {
+            if (!booking) return;
+
+            const seriesGroupId = booking.repeatGroupId || booking.groupId || null;
+            let seriesDates = customDatesList;
+            if (!seriesDates && seriesGroupId) {
+                seriesDates = state.bookings
+                    .filter(b => (b.repeatGroupId || b.groupId) === seriesGroupId)
+                    .map(b => b.date)
+                    .sort();
+            }
+
+            const startDate = (seriesDates && seriesDates.length > 0) ? seriesDates[0] : booking.date;
+            const dtStart = formatIcsDateTimeLocal(startDate, booking.startTime);
+            const dtEnd = formatIcsDateTimeLocal(startDate, booking.endTime);
+
+            const nowUtc = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            const uid = `onnuri-studio-${booking.id || Date.now()}@onnuri.org`;
+            const summary = `[양산 온누리교회 연습실] ${booking.department} - ${booking.purpose}`;
+            const description = `기관: ${booking.department}\\n사용 사유: ${booking.purpose}\\n신청자: ${booking.name}\\n장소: 양산 온누리교회 예배음악국 연습실 (Onnuri Worship Studio)`;
+
+            let rruleLine = '';
+            if (seriesDates && seriesDates.length > 1) {
+                const lastDateClean = seriesDates[seriesDates.length - 1].replace(/-/g, '');
+                rruleLine = `RRULE:FREQ=WEEKLY;UNTIL=${lastDateClean}T235959`;
+            }
+
+            const icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Onnuri Worship Studio//Booking System//KO',
+                'CALSCALE:GREGORIAN',
+                'BEGIN:VTIMEZONE',
+                'TZID:Asia/Seoul',
+                'BEGIN:STANDARD',
+                'DTSTART:19700101T000000',
+                'TZOFFSETFROM:+0900',
+                'TZOFFSETTO:+0900',
+                'TZNAME:KST',
+                'END:STANDARD',
+                'END:VTIMEZONE',
+                'BEGIN:VEVENT',
+                `UID:${uid}`,
+                `DTSTAMP:${nowUtc}`,
+                `DTSTART;TZID=Asia/Seoul:${dtStart}`,
+                `DTEND;TZID=Asia/Seoul:${dtEnd}`,
+                rruleLine || null,
+                `SUMMARY:${escapeIcsText(summary)}`,
+                `DESCRIPTION:${escapeIcsText(description)}`,
+                'LOCATION:양산 온누리교회 예배음악국 연습실 (Onnuri Worship Studio)',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].filter(Boolean).join('\r\n');
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `onnuri-studio-${startDate.replace(/-/g, '')}.ics`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            showToast('캘린더 일정(.ics) 파일이 다운로드되었습니다.', 'success');
+        }
+
+        /**
+         * ============================================================================
+         * 11. 예약자 본인 PIN 취소 & 관리자 즉시 삭제
+         * ============================================================================
+         */
+        function openUserCancelPinModal(bookingId) {
+            const booking = state.bookings.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            state.cancelTargetId = bookingId;
+            document.getElementById('cancelPinInput').value = '';
+            document.getElementById('cancelPinError').classList.add('hidden');
+
+            document.getElementById('cancelTargetSummary').innerHTML = `
+                <strong>${escapeHtml(formatKoreanDateFull(booking.date))}</strong> · <span class="font-num font-bold">${escapeHtml(booking.startTime)}~${escapeHtml(booking.endTime)}</span><br>
+                [${escapeHtml(booking.department)}] ${escapeHtml(booking.purpose)} (${escapeHtml(booking.name)})
+            `;
+
+            const seriesGroupId = booking.repeatGroupId || booking.groupId || null;
+            const scopeBox = document.getElementById('userCancelScopeBox');
+            if (seriesGroupId) {
+                const seriesBookings = state.bookings.filter(b => (b.repeatGroupId || b.groupId) === seriesGroupId);
+                if (seriesBookings.length > 1) {
+                    scopeBox.classList.remove('hidden');
+                    document.getElementById('userCancelAllLabel').textContent = `반복 일정 전체 삭제 (${seriesBookings.length}건)`;
+                    const singleRadio = document.querySelector('input[name="userCancelScope"][value="single"]');
+                    if (singleRadio) singleRadio.checked = true;
+                } else {
+                    scopeBox.classList.add('hidden');
+                }
+            } else {
+                scopeBox.classList.add('hidden');
+            }
+
+            openModal('userCancelPinModal');
+            setTimeout(() => document.getElementById('cancelPinInput').focus(), 60);
+        }
+
+        async function handleUserCancelWithPin(event) {
+            event.preventDefault();
+            const booking = state.bookings.find(b => b.id === state.cancelTargetId);
+            if (!booking) return;
+
+            const enteredPin = document.getElementById('cancelPinInput').value.trim();
+            if (enteredPin !== String(booking.pin)) {
+                document.getElementById('cancelPinError').classList.remove('hidden');
+                return;
+            }
+
+            const selectedScope = document.querySelector('input[name="userCancelScope"]:checked')?.value || 'single';
+            const seriesGroupId = booking.repeatGroupId || booking.groupId || null;
+
+            let targets = [booking];
+            if (selectedScope === 'all' && seriesGroupId) {
+                targets = state.bookings.filter(b => (b.repeatGroupId || b.groupId) === seriesGroupId);
+            }
+
+            try {
+                if (db) {
+                    const updates = {};
+                    targets.forEach(t => {
+                        updates[`bookings/${t.id}`] = null;
+                    });
+                    await db.ref().update(updates);
+                } else {
+                    const targetIds = new Set(targets.map(t => t.id));
+                    state.bookings = state.bookings.filter(b => !targetIds.has(b.id));
+                    saveCachedArray(CACHE_BOOKINGS_KEY, state.bookings);
+                    renderApp();
+                }
+
+                closeModal('userCancelPinModal');
+                if (!document.getElementById('dailyDetailModal').classList.contains('hidden')) {
+                    openDailyDetailModal(state.selectedDate);
+                }
+                showToast(targets.length > 1 ? `반복 예약 ${targets.length}건이 모두 취소되었습니다.` : '예약이 취소되었습니다.', 'info');
+            } catch (err) {
+                console.error('예약 취소 실패:', err);
+                showToast('예약 취소 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        function openAdminForceDeleteModal(bookingId) {
+            if (!state.currentAdminId) return;
+            const booking = state.bookings.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            state.adminDeleteTargetId = bookingId;
+
+            document.getElementById('adminForceDeleteDetailBox').innerHTML = `
+                <div class="flex justify-between"><span class="text-slate-500">예약 일시</span><span class="font-bold text-slate-900 font-num">${escapeHtml(booking.date)} (${escapeHtml(booking.startTime)}~${escapeHtml(booking.endTime)})</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">기관 / 사유</span><span class="font-bold text-slate-900">[${escapeHtml(booking.department)}] ${escapeHtml(booking.purpose)}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">신청자 / 연락처</span><span class="font-bold text-indigo-700 font-num">${escapeHtml(booking.name)} · ${escapeHtml(booking.phone || '미입력')}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">취소 비밀번호</span><span class="font-bold text-slate-700 font-num">${escapeHtml(booking.pin || '없음')}</span></div>
+            `;
+
+            const seriesGroupId = booking.repeatGroupId || booking.groupId || null;
+            const scopeBox = document.getElementById('adminForceDeleteScopeBox');
+            if (seriesGroupId) {
+                const seriesBookings = state.bookings.filter(b => (b.repeatGroupId || b.groupId) === seriesGroupId);
+                if (seriesBookings.length > 1) {
+                    scopeBox.classList.remove('hidden');
+                    document.getElementById('adminForceDeleteAllLabel').textContent = `반복 일정 전체 삭제 (${seriesBookings.length}건)`;
+                    const singleRadio = document.querySelector('input[name="adminDeleteScope"][value="single"]');
+                    if (singleRadio) singleRadio.checked = true;
+                } else {
+                    scopeBox.classList.add('hidden');
+                }
+            } else {
+                scopeBox.classList.add('hidden');
+            }
+
+            openModal('adminForceDeleteModal');
+        }
+
+        async function executeAdminForceDelete() {
+            if (!state.currentAdminId) return;
+            const booking = state.bookings.find(b => b.id === state.adminDeleteTargetId);
+            if (!booking) return;
+
+            const selectedScope = document.querySelector('input[name="adminDeleteScope"]:checked')?.value || 'single';
+            const seriesGroupId = booking.repeatGroupId || booking.groupId || null;
+
+            let targets = [booking];
+            if (selectedScope === 'all' && seriesGroupId) {
+                targets = state.bookings.filter(b => (b.repeatGroupId || b.groupId) === seriesGroupId);
+            }
+
+            try {
+                if (db) {
+                    const updates = {};
+                    targets.forEach(t => {
+                        updates[`bookings/${t.id}`] = null;
+                    });
+                    await db.ref().update(updates);
+                } else {
+                    const targetIds = new Set(targets.map(t => t.id));
+                    state.bookings = state.bookings.filter(b => !targetIds.has(b.id));
+                    saveCachedArray(CACHE_BOOKINGS_KEY, state.bookings);
+                    renderApp();
+                }
+
+                closeModal('adminForceDeleteModal');
+                if (!document.getElementById('dailyDetailModal').classList.contains('hidden')) {
+                    openDailyDetailModal(state.selectedDate);
+                }
+                showToast(targets.length > 1 ? `관리자 권한으로 반복 일정 ${targets.length}건을 삭제했습니다.` : '관리자 권한으로 예약을 삭제했습니다.', 'info');
+            } catch (err) {
+                console.error('관리자 삭제 실패:', err);
+                showToast('삭제 처리 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 12. 장비/시설 이상 제보 & 관리자 전체 예약 관리 모달 & 6개월 과거 기록 삭제
+         * ============================================================================
+         */
+        function openFacilityReportModal() {
+            document.getElementById('reportReporterInput').value = '';
+            document.getElementById('reportMessageInput').value = '';
+            openModal('facilityReportModal');
+            setTimeout(() => document.getElementById('reportReporterInput').focus(), 60);
+        }
+
+        function appendReportQuickTag(tagText) {
+            const msgInput = document.getElementById('reportMessageInput');
+            if (!msgInput) return;
+            const cur = msgInput.value.trim();
+            if (!cur) {
+                msgInput.value = tagText;
+            } else if (!cur.includes(tagText)) {
+                msgInput.value = `${cur} · ${tagText}`;
+            }
+            msgInput.focus();
+        }
+
+        async function submitFacilityReport(event) {
+            event.preventDefault();
+            const reporter = document.getElementById('reportReporterInput').value.trim();
+            const content = document.getElementById('reportMessageInput').value.trim();
+            if (!reporter || !content) return;
+
+            const btn = document.getElementById('btnSubmitFacilityReport');
+            btn.disabled = true;
+            btn.textContent = '접수 중...';
+
+            try {
+                const payload = {
+                    reporter,
+                    content,
+                    message: content,
+                    createdAt: Date.now()
+                };
+
+                if (reportsRef) {
+                    await reportsRef.push().set(payload);
+                } else {
+                    state.reports.push({ id: `rep_${Date.now()}`, ...payload });
+                    saveCachedArray(CACHE_REPORTS_KEY, state.reports);
+                    renderApp();
+                }
+
+                closeModal('facilityReportModal');
+                showToast('장비/시설 이상 제보가 접수되었습니다. 감사합니다.', 'success');
+            } catch (err) {
+                console.error('이상 제보 등록 실패:', err);
+                showToast('제보 등록 중 오류가 발생했습니다.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '제보 등록하기';
+            }
+        }
+
+        async function resolveFacilityReport(reportId) {
+            if (!state.currentAdminId) return;
+            try {
+                if (db) {
+                    await db.ref(`reports/${reportId}`).remove();
+                } else {
+                    state.reports = state.reports.filter(r => r.id !== reportId);
+                    saveCachedArray(CACHE_REPORTS_KEY, state.reports);
+                    renderApp();
+                }
+                showToast('이상 제보가 조치 완료(삭제) 처리되었습니다.', 'info');
+            } catch (err) {
+                console.error('이상 제보 삭제 실패:', err);
+                showToast('제보 삭제 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        function getOldBookingsBeforeCutoff() {
+            const cutoffDateStr = addDaysToDateStr(getTodayStr(), -PAST_CLEANUP_DAYS);
+            return state.bookings.filter(b => b.date && b.date < cutoffDateStr);
+        }
+
+        function openCleanupPastDataModal() {
+            if (!state.currentAdminId) return;
+            const oldList = getOldBookingsBeforeCutoff();
+            const cutoffDateStr = addDaysToDateStr(getTodayStr(), -PAST_CLEANUP_DAYS);
+
+            const summaryEl = document.getElementById('cleanupPastDataSummary');
+            const confirmBtn = document.getElementById('btnConfirmCleanupPast');
+
+            if (oldList.length === 0) {
+                summaryEl.innerHTML = `기준일(<span class="font-num font-bold">${cutoffDateStr}</span>) 이전의 6개월 경과 예약 기록이 없습니다.`;
+                confirmBtn.disabled = true;
+                confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                summaryEl.innerHTML = `기준일(<span class="font-num font-bold">${cutoffDateStr}</span>) 이전의 6개월 경과 과거 예약 기록 <strong class="text-rose-600 font-num">${oldList.length}건</strong>을 영구 삭제합니다. 삭제 후에는 복구할 수 없습니다.`;
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            openModal('cleanupPastDataModal');
+        }
+
+        async function executeCleanupPastData() {
+            if (!state.currentAdminId) return;
+            const oldList = getOldBookingsBeforeCutoff();
+            if (oldList.length === 0) {
+                closeModal('cleanupPastDataModal');
+                return;
+            }
+
+            const btn = document.getElementById('btnConfirmCleanupPast');
+            btn.disabled = true;
+            btn.textContent = '삭제 중...';
+
+            try {
+                if (db) {
+                    const updates = {};
+                    oldList.forEach(item => {
+                        updates[`bookings/${item.id}`] = null;
+                    });
+                    await db.ref().update(updates);
+                } else {
+                    const oldIds = new Set(oldList.map(x => x.id));
+                    state.bookings = state.bookings.filter(b => !oldIds.has(b.id));
+                    saveCachedArray(CACHE_BOOKINGS_KEY, state.bookings);
+                    renderApp();
+                }
+
+                closeModal('cleanupPastDataModal');
+                showToast(`6개월 이전 과거 기록 ${oldList.length}건이 일괄 삭제되었습니다.`, 'success');
+            } catch (err) {
+                console.error('과거 기록 일괄 삭제 실패:', err);
+                showToast('과거 기록 삭제 중 오류가 발생했습니다.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '일괄 삭제 실행';
+            }
+        }
+
+        function setAdminPeriodFilter(filterType) {
+            state.adminPeriodFilter = filterType;
+            const allBtn = document.getElementById('filterAllBtn');
+            const upBtn = document.getElementById('filterUpcomingBtn');
+            const pastBtn = document.getElementById('filterPastBtn');
+            const activeClass = 'px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white transition';
+            const inactiveClass = 'px-3 py-1.5 rounded-lg font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+
+            if (allBtn) allBtn.className = filterType === 'all' ? activeClass : inactiveClass;
+            if (upBtn) upBtn.className = filterType === 'upcoming' ? activeClass : inactiveClass;
+            if (pastBtn) pastBtn.className = filterType === 'past' ? activeClass : inactiveClass;
+            renderAdminManageLists();
+        }
+
+        function openAdminManageModal() {
+            if (!state.currentAdminId) return;
+            renderAdminManageLists();
+            openModal('adminManageModal');
+        }
+
+        function renderPublicIssuePill() {
+            const pill = document.getElementById('publicIssueCountPill');
+            if (!pill) return;
+            if (state.reports.length > 0) {
+                pill.textContent = `접수 ${state.reports.length}건`;
+                pill.classList.remove('hidden');
+            } else {
+                pill.classList.add('hidden');
+            }
+        }
+
+        function renderAdminManageLists() {
+            if (!state.currentAdminId) return;
+
+            const totalBadge = document.getElementById('adminModalTotalBadge');
+            if (totalBadge) totalBadge.textContent = `전체 ${state.bookings.length}건`;
+
+            // 1. 접수된 장비/시설 이상 제보 목록
+            const reportCountBadge = document.getElementById('adminReportCountBadge');
+            const reportsListEl = document.getElementById('adminFacilityReportsList');
+            const sortedReports = [...state.reports].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            if (reportCountBadge) reportCountBadge.textContent = `${sortedReports.length}건`;
+
+            if (reportsListEl) {
+                if (sortedReports.length === 0) {
+                    reportsListEl.innerHTML = `
+                        <div class="p-3 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center text-[11px] text-slate-400">
+                            접수된 장비/시설 이상 제보가 없습니다.
+                        </div>
+                    `;
+                } else {
+                    reportsListEl.innerHTML = sortedReports.map(rep => {
+                        const dt = rep.createdAt ? new Date(rep.createdAt) : null;
+                        const timeLabel = dt ? `${dt.getMonth() + 1}/${dt.getDate()} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}` : '';
+                        const textBody = rep.content || rep.message || '';
+                        return `
+                            <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-200 flex items-start justify-between gap-2.5">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-900 leading-snug">${escapeHtml(textBody)}</p>
+                                    <p class="text-[11px] text-slate-600 mt-1">
+                                        제보자: <span class="font-semibold">${escapeHtml(rep.reporter)}</span>
+                                        ${timeLabel ? `<span class="text-slate-400 font-num ml-1.5">(${timeLabel})</span>` : ''}
+                                    </p>
+                                </div>
+                                <button type="button" data-action="resolve-report" data-id="${escapeHtml(rep.id)}"
+                                    class="shrink-0 px-2.5 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold transition">
+                                    조치 완료 (삭제)
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            // 2. 6개월 이전 과거 기록 카운트
+            const oldBookings = getOldBookingsBeforeCutoff();
+            const oldCountTextEl = document.getElementById('oldBookingsCountText');
+            if (oldCountTextEl) {
+                oldCountTextEl.textContent = `6개월(180일) 이전 과거 기록: ${oldBookings.length}건`;
+            }
+
+            // 3. 필터링 및 검색된 전체 예약 목록
+            const searchInput = document.getElementById('adminSearchInput');
+            const clearBtn = document.getElementById('adminSearchClearBtn');
+            const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+
+            if (clearBtn) {
+                if (query) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
+
+            const todayStr = getTodayStr();
+            let filtered = [...state.bookings];
+
+            if (state.adminPeriodFilter === 'upcoming') {
+                filtered = filtered.filter(b => b.date >= todayStr);
+            } else if (state.adminPeriodFilter === 'past') {
+                filtered = filtered.filter(b => b.date < todayStr);
+            }
+
+            if (query) {
+                filtered = filtered.filter(b =>
+                    (b.name || '').toLowerCase().includes(query) ||
+                    (b.department || '').toLowerCase().includes(query) ||
+                    (b.purpose || '').toLowerCase().includes(query) ||
+                    (b.date || '').toLowerCase().includes(query) ||
+                    (b.phone || '').toLowerCase().includes(query)
+                );
+            }
+
+            filtered.sort((a, b) => {
+                if (a.date !== b.date) return a.date.localeCompare(b.date);
+                return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+            });
+
+            const filteredBadge = document.getElementById('adminFilteredCountBadge');
+            if (filteredBadge) filteredBadge.textContent = `${filtered.length}건 표시`;
+
+            const listContainer = document.getElementById('adminAllBookingsList');
+            if (!listContainer) return;
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="py-10 text-center rounded-xl border border-dashed border-slate-200 bg-white">
+                        <p class="text-xs font-semibold text-slate-500">조건에 해당하는 예약 내역이 없습니다.</p>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = filtered.map(b => buildBookingCardHtml(b, { showDateHeader: true, showAdminPin: true })).join('');
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 13. 인앱 QR코드 포스터 생성기 (800x1040 PNG, 온누리교회 엠블럼 & 현재 배포 URL)
+         * ============================================================================
+         */
+        function getActiveAppUrl() {
+            const origin = window.location.origin || '';
+            const pathname = window.location.pathname || '/';
+            if (origin.startsWith('http')) {
+                return `${origin}${pathname}`.replace(/\/index\.html$/, '');
+            }
+            return 'https://ys-onnuri-studio.pages.dev';
+        }
+
+        function drawOnnuriEmblemOnCanvas(ctx, x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+            const scale = size / 100;
+            ctx.scale(scale, scale);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(0, 0, 100, 100, 22);
+            } else {
+                ctx.rect(0, 0, 100, 100);
+            }
+            ctx.fill();
+
+            if (typeof Path2D !== 'undefined') {
+                ctx.save();
+                ctx.translate(10, 10);
+                ctx.scale(0.8, 0.8);
+
+                ctx.fillStyle = '#C81E1E';
+                ctx.fill(new Path2D(ONNURI_LOGO_PATHS.crossVert));
+                ctx.fill(new Path2D(ONNURI_LOGO_PATHS.crossHoriz));
+
+                ctx.fillStyle = '#0052B4';
+                ctx.fill(new Path2D(ONNURI_LOGO_PATHS.blueArc));
+
+                ctx.fillStyle = '#2E7D32';
+                ctx.fill(new Path2D(ONNURI_LOGO_PATHS.greenStroke));
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        function renderQrPosterCanvas() {
+            const posterCanvas = document.getElementById('qrPosterCanvas');
+            if (!posterCanvas) return;
+
+            const appUrl = getActiveAppUrl();
+            const W = 800;
+            const H = 1040;
+            posterCanvas.width = W;
+            posterCanvas.height = H;
+            const ctx = posterCanvas.getContext('2d');
+
+            // 1. 전체 흰색 포스터 배경
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, H);
+
+            // 2. 상단 인디고 헤더 영역
+            ctx.fillStyle = '#4f46e5';
+            ctx.fillRect(0, 0, W, 224);
+
+            // 온누리교회 엠블럼 그리기
+            drawOnnuriEmblemOnCanvas(ctx, 56, 46, 132);
+
+            // 헤더 브랜딩 텍스트
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#e0e7ff';
+            ctx.font = 'bold 28px Pretendard, sans-serif';
+            ctx.fillText('양산 온누리교회', 216, 90);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 46px Pretendard, sans-serif';
+            ctx.fillText('예배음악국 연습실', 216, 146);
+
+            ctx.fillStyle = '#c7d2fe';
+            ctx.font = '600 23px Inter, sans-serif';
+            ctx.fillText('Onnuri Worship Studio', 216, 186);
+
+            // 3. 중앙 QR 코드 박스 영역
+            const qrAreaSize = 460;
+            const qrX = (W - qrAreaSize) / 2;
+            const qrY = 280;
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(qrX - 24, qrY - 24, qrAreaSize + 48, qrAreaSize + 48);
+
+            // qrcode-generator 라이브러리를 이용해 셀 단위로 정밀 렌더링
+            if (typeof qrcode !== 'undefined') {
+                const qr = qrcode(0, 'M');
+                qr.addData(appUrl);
+                qr.make();
+                const count = qr.getModuleCount();
+                const tileSize = qrAreaSize / count;
+
+                for (let row = 0; row < count; row++) {
+                    for (let col = 0; col < count; col++) {
+                        ctx.fillStyle = qr.isDark(row, col) ? '#0f172a' : '#ffffff';
+                        ctx.fillRect(
+                            Math.round(qrX + col * tileSize),
+                            Math.round(qrY + row * tileSize),
+                            Math.ceil(tileSize),
+                            Math.ceil(tileSize)
+                        );
+                    }
+                }
+            } else {
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(qrX, qrY, qrAreaSize, qrAreaSize);
+                ctx.fillStyle = '#334155';
+                ctx.textAlign = 'center';
+                ctx.font = 'bold 24px Pretendard, sans-serif';
+                ctx.fillText('QR 라이브러리 로드 대기 중', W / 2, qrY + qrAreaSize / 2);
+            }
+
+            // 4. 하단 안내 문구 및 접속 주소 배지
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 34px Pretendard, sans-serif';
+            ctx.fillText('스캔하여 연습실 실시간 예약하기', W / 2, 825);
+
+            ctx.fillStyle = '#475569';
+            ctx.font = '500 22px Pretendard, sans-serif';
+            ctx.fillText('스마트폰 카메라로 QR코드를 비춰 빈 시간을 바로 예약하세요', W / 2, 870);
+
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(88, 912, W - 176, 66);
+            ctx.fillStyle = '#4338ca';
+            ctx.font = 'bold 25px Inter, sans-serif';
+            ctx.fillText(appUrl, W / 2, 954);
+        }
+
+        function downloadQrCodePng() {
+            const posterCanvas = document.getElementById('qrPosterCanvas');
+            if (!posterCanvas) return;
+
+            try {
+                const dataUrl = posterCanvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = 'onnuri-worship-studio-qr.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast('출입문 QR코드 PNG 포스터(800×1040)가 저장되었습니다.', 'success');
+            } catch (err) {
+                console.error('QR PNG 저장 실패:', err);
+                showToast('이미지 저장 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        function openQrCodeModalAndDownload() {
+            openModal('qrCodeModal');
+            renderQrPosterCanvas();
+            downloadQrCodePng();
+        }
+
+        /**
+         * ============================================================================
+         * 14. 전체 UI 통합 렌더링 & 이벤트 위임 바인딩 (즉시 실행)
+         * ============================================================================
+         */
+        function renderApp() {
+            renderHeaderAuth();
+            renderCalendar();
+            renderSelectedDay();
+            renderPublicIssuePill();
+            const adminModal = document.getElementById('adminManageModal');
+            if (state.currentAdminId && adminModal && !adminModal.classList.contains('hidden')) {
+                renderAdminManageLists();
+            }
+        }
+
+        function updateSyncBadge(status, labelText) {
+            const pill = document.getElementById('syncStatusPill');
+            const dot = document.getElementById('syncStatusDot');
+            const text = document.getElementById('syncStatusText');
+            if (!pill || !dot || !text) return;
+
+            text.textContent = labelText;
+            if (status === 'connected') {
+                pill.className = 'inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-emerald-50 text-emerald-700 border border-emerald-200';
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+            } else if (status === 'offline') {
+                pill.className = 'inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-slate-100 text-slate-600 border border-slate-200';
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-400';
+            } else {
+                pill.className = 'inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200/80';
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
+            }
+        }
+
+        function bindAllEvents() {
+            // 상단 헤더 버튼들
+            document.getElementById('btnOpenAdminLogin').addEventListener('click', openAdminLoginModal);
+            document.getElementById('btnOpenAdminManageModal').addEventListener('click', openAdminManageModal);
+            document.getElementById('btnHeaderQrSave').addEventListener('click', openQrCodeModalAndDownload);
+            document.getElementById('btnHeaderLogout').addEventListener('click', handleAdminLogout);
+
+            // 월 이동 및 '오늘' 버튼
+            document.getElementById('btnGoToday').addEventListener('click', goToToday);
+            document.getElementById('btnPrevMonth').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('btnNextMonth').addEventListener('click', () => changeMonth(1));
+
+            // 캘린더 그리드 날짜 클릭/더블탭 위임 리스너
+            document.getElementById('calendarGrid').addEventListener('click', (e) => {
+                const dayBtn = e.target.closest('[data-cal-date]');
+                if (!dayBtn) return;
+                const dateStr = dayBtn.getAttribute('data-cal-date');
+                if (dateStr) handleCalendarDateTap(dateStr);
+            });
+
+            // 카드 내부 액션 버튼 위임 리스너 (일일 목록, 상세 팝업, 관리자 모달 공용)
+            document.body.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+
+                const action = actionBtn.getAttribute('data-action');
+                const targetId = actionBtn.getAttribute('data-id');
+
+                if (action === 'download-ics') {
+                    const booking = state.bookings.find(b => b.id === targetId);
+                    if (booking) downloadBookingIcs(booking);
+                } else if (action === 'user-cancel') {
+                    openUserCancelPinModal(targetId);
+                } else if (action === 'admin-force-delete') {
+                    openAdminForceDeleteModal(targetId);
+                } else if (action === 'resolve-report') {
+                    resolveFacilityReport(targetId);
+                }
+            });
+
+            // 플로팅 예약하기 & 상세 팝업 내 예약하기
+            document.getElementById('btnOpenBookingFloating').addEventListener('click', () => openBookingModal(state.selectedDate));
+            document.getElementById('btnBookFromDetailModal').addEventListener('click', () => {
+                closeModal('dailyDetailModal');
+                openBookingModal(state.selectedDate);
+            });
+
+            // 예약 신청 폼 이벤트
+            document.getElementById('inputDate').addEventListener('change', onStartDateChanged);
+            document.getElementById('inputStartTime').addEventListener('change', onStartTimeChanged);
+            document.getElementById('inputEndTime').addEventListener('change', validateScheduleAvailability);
+
+            document.getElementById('toggleWeeklyRecurring').addEventListener('change', (e) => {
+                setWeeklyRecurringEnabled(e.target.checked);
+            });
+            document.getElementById('inputRecurrenceEndDate').addEventListener('change', validateScheduleAvailability);
+            document.querySelectorAll('.quick-recurrence-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const weeks = Number(btn.getAttribute('data-quick-weeks') || 4);
+                    setQuickRecurrenceWeeks(weeks);
+                });
+            });
+
+            // 기관 입력 및 빠른 선택 버튼 ([클레이], [헤세드], [마라나타], [개인])
+            document.getElementById('inputDept').addEventListener('input', syncOrganizationChipHighlight);
+            document.querySelectorAll('.org-preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectOrganizationPreset(btn.getAttribute('data-org-chip'));
+                });
+            });
+
+            // 연락처 자동 하이픈 & PIN 4자리 숫자 필터
+            document.getElementById('inputPhone').addEventListener('input', (e) => {
+                e.target.value = formatPhoneNumber(e.target.value);
+            });
+            document.getElementById('inputPin').addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+            });
+            document.getElementById('inputCheckoutCheck').addEventListener('change', validateScheduleAvailability);
+            document.getElementById('bookingForm').addEventListener('submit', submitBooking);
+
+            // 예약 완료 후 .ics 다운로드 버튼
+            document.getElementById('btnDownloadSuccessIcs').addEventListener('click', () => {
+                if (state.lastBookedPayload) {
+                    downloadBookingIcs(state.lastBookedPayload.firstBooking, state.lastBookedPayload.targetDates);
+                }
+            });
+
+            // 관리자 로그인 모달
+            document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLoginSubmit);
+            document.getElementById('adminIdInput').addEventListener('input', () => {
+                document.getElementById('adminLoginError').classList.add('hidden');
+            });
+            document.getElementById('adminPwInput').addEventListener('input', () => {
+                document.getElementById('adminLoginError').classList.add('hidden');
+            });
+
+            // 예약자 본인 PIN 취소 모달
+            document.getElementById('userCancelPinForm').addEventListener('submit', handleUserCancelWithPin);
+            document.getElementById('cancelPinInput').addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                document.getElementById('cancelPinError').classList.add('hidden');
+            });
+
+            // 관리자 삭제 실행
+            document.getElementById('btnExecuteAdminForceDelete').addEventListener('click', executeAdminForceDelete);
+
+            // 장비/시설 이상 제보 모달
+            document.getElementById('btnOpenFacilityReport').addEventListener('click', openFacilityReportModal);
+            document.getElementById('btnAdminAddReport').addEventListener('click', openFacilityReportModal);
+            document.getElementById('facilityReportForm').addEventListener('submit', submitFacilityReport);
+            document.querySelectorAll('.report-tag-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    appendReportQuickTag(btn.getAttribute('data-report-tag'));
+                });
+            });
+
+            // QR코드 PNG 수동 다시 저장 버튼
+            document.getElementById('btnDownloadQrPng').addEventListener('click', downloadQrCodePng);
+
+            // 관리자 모달 내 필터/검색/과거 기록 일괄 삭제
+            document.getElementById('filterAllBtn').addEventListener('click', () => setAdminPeriodFilter('all'));
+            document.getElementById('filterUpcomingBtn').addEventListener('click', () => setAdminPeriodFilter('upcoming'));
+            document.getElementById('filterPastBtn').addEventListener('click', () => setAdminPeriodFilter('past'));
+            document.getElementById('adminSearchInput').addEventListener('input', renderAdminManageLists);
+            document.getElementById('adminSearchClearBtn').addEventListener('click', () => {
+                document.getElementById('adminSearchInput').value = '';
+                renderAdminManageLists();
+            });
+            document.getElementById('btnOpenCleanupPast').addEventListener('click', openCleanupPastDataModal);
+            document.getElementById('btnConfirmCleanupPast').addEventListener('click', executeCleanupPastData);
+
+            // 모든 모달 닫기 버튼 및 배경 클릭 닫기
+            document.querySelectorAll('[data-close-modal]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    closeModal(btn.getAttribute('data-close-modal'));
+                });
+            });
+            document.querySelectorAll('[data-backdrop-close]').forEach(backdrop => {
+                backdrop.addEventListener('click', (e) => {
+                    if (e.target === backdrop) {
+                        closeModal(backdrop.getAttribute('data-backdrop-close'));
+                    }
+                });
+            });
+        }
+
+        /**
+         * ============================================================================
+         * 15. Firebase Realtime Database 초기화 (try/catch 보호 및 실시간 동기화)
+         * ============================================================================
+         */
+        function initFirebaseConnection() {
+            const firebaseConfig = {
+                authDomain: 'ys-onnuri-studio-bookingsystem.firebaseapp.com',
+                databaseURL: 'https://ys-onnuri-studio-bookingsystem-default-rtdb.firebaseio.com',
+                projectId: 'ys-onnuri-studio-bookingsystem',
+                storageBucket: 'ys-onnuri-studio-bookingsystem.appspot.com'
+            };
+
+            try {
+                if (typeof firebase === 'undefined') {
+                    updateSyncBadge('offline', '오프라인 모드');
+                    return;
+                }
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+
+                db = firebase.database();
+                bookingsRef = db.ref('bookings');
+                reportsRef = db.ref('reports');
+                const connectedRef = db.ref('.info/connected');
+
+                connectedRef.on('value', (snap) => {
+                    const isConnected = snap.val() === true;
+                    if (isConnected) {
+                        state.hasEverConnected = true;
+                        updateSyncBadge('connected', '실시간 동기화됨');
+                        document.getElementById('dbErrorBanner').classList.add('hidden');
+                    } else if (state.hasEverConnected) {
+                        updateSyncBadge('offline', '오프라인 모드');
+                    }
+                });
+
+                // 예약 데이터 실시간 구독 ('bookings')
+                bookingsRef.on(
+                    'value',
+                    (snapshot) => {
+                        state.hasEverConnected = true;
+                        updateSyncBadge('connected', '실시간 동기화됨');
+                        document.getElementById('dbErrorBanner').classList.add('hidden');
+
+                        const rawVal = snapshot.val();
+                        if (!rawVal) {
+                            state.bookings = [];
+                        } else {
+                            state.bookings = Object.entries(rawVal)
+                                .filter(([, item]) => item && item.status !== 'rejected' && item.status !== 'cancelled')
+                                .map(([id, item]) => ({
+                                    id,
+                                    date: item.date || '',
+                                    startTime: item.startTime || '09:00',
+                                    endTime: item.endTime || '10:00',
+                                    department: item.department || '',
+                                    purpose: item.purpose || '',
+                                    name: item.name || item.userName || '',
+                                    userName: item.userName || item.name || '',
+                                    phone: item.phone || '',
+                                    pin: item.pin || '',
+                                    status: 'confirmed',
+                                    repeatGroupId: item.repeatGroupId || item.groupId || item.recurringGroupId || item.seriesId || null,
+                                    groupId: item.groupId || item.repeatGroupId || item.recurringGroupId || item.seriesId || null,
+                                    createdAt: item.createdAt || 0
+                                }));
+                        }
+
+                        saveCachedArray(CACHE_BOOKINGS_KEY, state.bookings);
+                        renderApp();
+
+                        const bookingModal = document.getElementById('bookingModal');
+                        const bookingForm = document.getElementById('bookingForm');
+                        if (bookingModal && !bookingModal.classList.contains('hidden') && bookingForm && !bookingForm.classList.contains('hidden')) {
+                            validateScheduleAvailability();
+                        }
+                    },
+                    (error) => {
+                        console.error('Firebase bookings 구독 오류:', error);
+                        updateSyncBadge('offline', '오프라인 모드');
+
+                        const banner = document.getElementById('dbErrorBanner');
+                        const detail = document.getElementById('dbErrorDetail');
+                        banner.classList.remove('hidden');
+
+                        if (error && error.code === 'PERMISSION_DENIED') {
+                            detail.textContent = 'Firebase Realtime Database 규칙에서 .read / .write 권한이 차단되어 있습니다.';
+                        } else {
+                            detail.textContent = `데이터베이스 연결에 실패했습니다 (${error && error.message ? error.message : '네트워크 확인 필요'}).`;
+                        }
+                    }
+                );
+
+                // 장비/시설 이상 제보 실시간 구독 ('reports')
+                reportsRef.on(
+                    'value',
+                    (snapshot) => {
+                        const rawVal = snapshot.val();
+                        if (!rawVal) {
+                            state.reports = [];
+                        } else {
+                            state.reports = Object.entries(rawVal)
+                                .filter(([, item]) => item && (item.content || item.message))
+                                .map(([id, item]) => ({
+                                    id,
+                                    reporter: item.reporter || '익명',
+                                    content: item.content || item.message || '',
+                                    message: item.message || item.content || '',
+                                    createdAt: item.createdAt || 0
+                                }));
+                        }
+                        saveCachedArray(CACHE_REPORTS_KEY, state.reports);
+                        renderApp();
+                    },
+                    (error) => {
+                        console.warn('Firebase reports 구독 오류:', error);
+                    }
+                );
+            } catch (err) {
+                console.error('Firebase 초기화 예외:', err);
+                updateSyncBadge('offline', '오프라인 모드');
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 16. DOMContentLoaded 즉시 UI 초기화 후 Firebase 실시간 연결 실행
+         * ============================================================================
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTimeSelectOptions();
+            bindAllEvents();
+            renderHeaderAuth();
+            renderCalendar();
+            renderSelectedDay();
+            renderPublicIssuePill();
+
+            initFirebaseConnection();
+        });
+    </script>
+</body>
+</html>
